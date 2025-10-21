@@ -4,9 +4,17 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Resp
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { DollarSign, Tag, User, PlusCircle, HandCoins } from 'lucide-react';
+import type { Expense, Category, HouseholdMember, Debt, Settings } from '../types';
 
 interface DashboardProps {
-  setView: (view: 'expenses' | 'reports' | 'categories' | 'people' | 'debts') => void;
+  setView?: (view: 'expenses' | 'reports' | 'categories' | 'people' | 'debts') => void;
+  dashboardData?: {
+    expenses: Expense[];
+    categories: Category[];
+    people: HouseholdMember[];
+    debts: Debt[];
+    settings: Settings;
+  }
 }
 
 const SummaryCard = ({ title, value, icon, color, onClick }: { title: string; value: string; icon: React.ReactNode; color: string, onClick?: () => void }) => (
@@ -21,8 +29,15 @@ const SummaryCard = ({ title, value, icon, color, onClick }: { title: string; va
     </Card>
 );
 
-const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
-  const { expenses, categories, people, debts, settings, getCategoryName, getPersonName } = useAppContext();
+const Dashboard: React.FC<DashboardProps> = ({ setView, dashboardData }) => {
+  const appContext = useAppContext();
+
+  // Use props if available, otherwise use context
+  const { expenses, categories, people, debts, settings } = dashboardData || appContext;
+  
+  // Recreate getters locally if data is passed via props
+  const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
+  const getPersonName = (id: string) => people.find(p => p.id === id)?.name || 'Unknown';
 
   const currentMonthExpenses = useMemo(() => {
     const now = new Date();
@@ -107,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5),
   [expenses]);
 
-  if (expenses.length === 0) {
+  if (expenses.length === 0 && setView) {
     return (
         <Card className="text-center p-10">
             <h2 className="text-2xl font-bold mb-2">Welcome to ExpenseMgr!</h2>
@@ -124,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <SummaryCard title="Monthly Expense" value={`${settings.currency}${totalMonthlyExpense.toFixed(2)}`} icon={<DollarSign />} color="bg-primary-500" />
-        <SummaryCard title="Outstanding Debt" value={`${settings.currency}${totalOutstandingDebt.toFixed(2)}`} icon={<HandCoins />} color="bg-red-500" onClick={() => setView('debts')}/>
+        <SummaryCard title="Outstanding Debt" value={`${settings.currency}${totalOutstandingDebt.toFixed(2)}`} icon={<HandCoins />} color="bg-red-500" onClick={setView ? () => setView('debts') : undefined}/>
         <SummaryCard title="Top Category" value={topCategory} icon={<Tag />} color="bg-green-500" />
         <SummaryCard title="Top Spender" value={topSpender} icon={<User />} color="bg-yellow-500" />
       </div>

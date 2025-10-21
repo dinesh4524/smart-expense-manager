@@ -6,7 +6,8 @@ import Button from './ui/Button';
 import { User as AuthUser } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
 import { useSession } from '@/src/contexts/SessionContext';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Eye } from 'lucide-react';
+import UserDashboardViewer from './UserDashboardViewer';
 
 type AppUser = AuthUser & {
     user_metadata: {
@@ -22,6 +23,7 @@ const AdminDashboard: React.FC = () => {
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [deletingUser, setDeletingUser] = useState<AppUser | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [viewingUser, setViewingUser] = useState<AppUser | null>(null);
     const { session } = useSession();
 
     const fetchUsers = useCallback(async () => {
@@ -94,6 +96,19 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    if (viewingUser) {
+        const userName = viewingUser.first_name || viewingUser.last_name 
+            ? `${viewingUser.first_name || ''} ${viewingUser.last_name || ''}`.trim() 
+            : viewingUser.email;
+        return (
+            <UserDashboardViewer 
+                userId={viewingUser.id}
+                userName={userName || 'User'}
+                onBack={() => setViewingUser(null)}
+            />
+        );
+    }
+
     return (
         <Card>
             <div className="flex justify-between items-center mb-6">
@@ -139,7 +154,14 @@ const AdminDashboard: React.FC = () => {
                                     </td>
                                     <td className="p-3 whitespace-nowrap">{new Date(user.created_at).toLocaleDateString()}</td>
                                     <td className="p-3 whitespace-nowrap">{user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</td>
-                                    <td className="p-3 whitespace-nowrap text-center">
+                                    <td className="p-3 whitespace-nowrap text-center space-x-2">
+                                        <button 
+                                            onClick={() => setViewingUser(user)} 
+                                            className="text-primary-600 hover:text-primary-800"
+                                            title="View Dashboard"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
                                         <button 
                                             onClick={() => setDeletingUser(user)} 
                                             className="text-red-600 hover:text-red-800"
