@@ -15,8 +15,8 @@ import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
 import AdminDashboard from './components/AdminDashboard';
 import { AppProvider, useAppContext } from './contexts/AppContext';
-import { SessionContextProvider, useSession } from './src/contexts/SessionContext';
-import { supabase } from './src/integrations/supabase/client';
+import { SessionContextProvider, useSession } from '@/src/contexts/SessionContext';
+import { supabase } from '@/src/integrations/supabase/client';
 
 type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
 type UnauthenticatedView = 'landing' | 'login' | 'register';

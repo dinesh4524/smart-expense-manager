@@ -1,4 +1,4 @@
-import { supabase } from '../src/integrations/supabase/client';
+import { supabase } from '@/src/integrations/supabase/client';
 import type { Expense, Category, HouseholdMember, PaymentMode, Debt, ChitFund, Settings } from '../types';
 
 // Helper function to get the current user's ID

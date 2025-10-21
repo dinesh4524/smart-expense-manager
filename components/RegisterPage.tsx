@@ -5,7 +5,7 @@ import { UserPlus } from 'lucide-react';
 import Footer from './Footer';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { supabase } from '../src/integrations/supabase/client'; // Corrected path
+import { supabase } from '@/src/integrations/supabase/client';
 
 interface RegisterPageProps {
   onNavigateToLogin: () => void;

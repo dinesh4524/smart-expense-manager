@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../src/integrations/supabase/client';
+import { supabase } from '@/src/integrations/supabase/client';
 import Card from './ui/Card';
 import { User as AuthUser } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
