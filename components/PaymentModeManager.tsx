@@ -3,7 +3,7 @@ import { useAppContext } from '../contexts/AppContext';
 import type { PaymentMode } from '../types';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
-import { Edit, Trash, PlusCircle } from 'lucide-react';
+import { Edit, Trash, PlusCircle, WalletCards } from 'lucide-react';
 import Card from './ui/Card';
 
 const PaymentModeForm: React.FC<{ mode?: PaymentMode; onSave: (mode: Omit<PaymentMode, 'id'> | PaymentMode) => Promise<void>; onCancel: () => void; }> = ({ mode, onSave, onCancel }) => {
@@ -36,8 +36,8 @@ const PaymentModeForm: React.FC<{ mode?: PaymentMode; onSave: (mode: Omit<Paymen
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div>
-                <label className="block text-sm font-medium">Icon (Emoji)</label>
-                <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
+                <label className="block text-sm font-medium">Icon (Optional Emoji)</label>
+                <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="e.g., 💳" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div className="flex justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
@@ -103,7 +103,11 @@ const PaymentModeManager: React.FC = () => {
                     {paymentModes.map(mode => (
                         <li key={mode.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                             <div className="flex items-center">
-                               <span className="text-2xl mr-4">{mode.icon}</span>
+                               {mode.icon ? (
+                                    <span className="text-2xl mr-4">{mode.icon}</span>
+                                ) : (
+                                    <span className="text-2xl mr-4 text-gray-400"><WalletCards /></span>
+                                )}
                                <span className="font-medium">{mode.name}</span>
                             </div>
                             <div>
