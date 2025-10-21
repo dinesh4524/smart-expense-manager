@@ -38,5 +38,7 @@ A modern and user-friendly system designed to help you take control of your pers
 1. Install dependencies:
    `npm install`
 
+
+
 2. Run the app:
    `npm run dev`
