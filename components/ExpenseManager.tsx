@@ -4,15 +4,18 @@ import type { Expense } from '../types';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
 import { Edit, Trash, PlusCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense, 'id'> | Expense) => Promise<void>; onCancel: () => void; }> = ({ expense, onSave, onCancel }) => {
-    const { categories, people, paymentModes } = useAppContext();
+    const { categories, people, paymentModes, addPerson } = useAppContext();
     const [isSaving, setIsSaving] = useState(false);
+    const [showNewPersonInput, setShowNewPersonInput] = useState(false);
+    const [newPersonName, setNewPersonName] = useState('');
     
     const [formData, setFormData] = useState({
         date: expense ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
         description: expense?.description || '',
-        amount: expense?.amount || '', // Changed to empty string to avoid NaN
+        amount: expense?.amount || '',
         categoryId: expense?.categoryId || categories[0]?.id || '',
         personId: expense?.personId || people[0]?.id || '',
         paymentModeId: expense?.paymentModeId || paymentModes[0]?.id || '',
@@ -20,22 +23,47 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        // Keep amount as a string in the form state to handle empty input
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'personId' && value === '__add_new__') {
+            setShowNewPersonInput(true);
+        } else {
+            if (name === 'personId') {
+                setShowNewPersonInput(false);
+            }
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const parsedAmount = parseFloat(String(formData.amount));
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
-            alert("Amount must be a valid number greater than zero.");
+            toast.error("Amount must be a valid number greater than zero.");
             return;
         }
         
         setIsSaving(true);
+        let finalPersonId = formData.personId;
+
+        if (showNewPersonInput && newPersonName.trim() !== '') {
+            const newPerson = await addPerson({ name: newPersonName.trim() });
+            if (newPerson) {
+                finalPersonId = newPerson.id;
+            } else {
+                setIsSaving(false);
+                return; // Error toast is shown by addPerson
+            }
+        }
+
+        if (!finalPersonId || finalPersonId === '__add_new__') {
+            toast.error("Please select or add a person.");
+            setIsSaving(false);
+            return;
+        }
+
         const expenseData = {
             ...formData,
-            amount: parsedAmount, // Use the parsed numeric amount
+            amount: parsedAmount,
+            personId: finalPersonId,
             date: new Date(formData.date).toISOString(),
         };
         
@@ -75,9 +103,27 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
             </div>
             <div>
                 <label className="block text-sm font-medium">Person</label>
-                <select name="personId" value={formData.personId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                {showNewPersonInput ? (
+                    <div className="flex items-center gap-2 mt-1">
+                        <input 
+                            type="text" 
+                            placeholder="New Person's Name"
+                            value={newPersonName}
+                            onChange={(e) => setNewPersonName(e.target.value)}
+                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                            autoFocus
+                        />
+                        <Button type="button" variant="secondary" size="sm" onClick={() => {
+                            setShowNewPersonInput(false);
+                            setFormData(prev => ({ ...prev, personId: people[0]?.id || '' }));
+                        }}>Cancel</Button>
+                    </div>
+                ) : (
+                    <select name="personId" value={formData.personId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="__add_new__">-- Add New Person --</option>
+                    </select>
+                )}
             </div>
             <div>
                 <label className="block text-sm font-medium">Payment Mode</label>

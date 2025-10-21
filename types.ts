@@ -76,27 +76,27 @@ export interface AppContextType {
   settings: Settings;
   isLoadingData: boolean;
   // Expenses
-  addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id'>) => Promise<Expense | undefined>;
   updateExpense: (expense: Expense) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
   // Categories
-  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<Category | undefined>;
   updateCategory: (category: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   // People
-  addPerson: (person: Omit<HouseholdMember, 'id'>) => Promise<void>;
+  addPerson: (person: Omit<HouseholdMember, 'id'>) => Promise<HouseholdMember | undefined>;
   updatePerson: (person: HouseholdMember) => Promise<void>;
   deletePerson: (id: string) => Promise<void>;
   // Payment Modes
-  addPaymentMode: (mode: Omit<PaymentMode, 'id'>) => Promise<void>;
+  addPaymentMode: (mode: Omit<PaymentMode, 'id'>) => Promise<PaymentMode | undefined>;
   updatePaymentMode: (mode: PaymentMode) => Promise<void>;
   deletePaymentMode: (id: string) => Promise<void>;
   // Debts
-  addDebt: (debt: Omit<Debt, 'id'>) => Promise<void>;
+  addDebt: (debt: Omit<Debt, 'id'>) => Promise<Debt | undefined>;
   updateDebt: (debt: Debt) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
   // Chit Funds
-  addChitFund: (chit: Omit<ChitFund, 'id'>) => Promise<void>;
+  addChitFund: (chit: Omit<ChitFund, 'id'>) => Promise<ChitFund | undefined>;
   updateChitFund: (chit: ChitFund) => Promise<void>;
   deleteChitFund: (id: string) => Promise<void>;
   // Settings

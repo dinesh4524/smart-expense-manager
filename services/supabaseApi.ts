@@ -99,10 +99,13 @@ export const supabaseApi = {
 
     // --- Categories ---
     addCategory: async (category: Omit<Category, 'id'>, userId: string) => {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('categories')
-            .insert([{ ...category, user_id: userId }]);
+            .insert([{ ...category, user_id: userId }])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updateCategory: async (category: Category) => {
         const { error } = await supabase
@@ -121,10 +124,13 @@ export const supabaseApi = {
 
     // --- Household Members (People) ---
     addPerson: async (person: Omit<HouseholdMember, 'id'>, userId: string) => {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('household_members')
-            .insert([{ ...person, user_id: userId }]);
+            .insert([{ ...person, user_id: userId }])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updatePerson: async (person: HouseholdMember) => {
         const { error } = await supabase
@@ -143,10 +149,13 @@ export const supabaseApi = {
 
     // --- Payment Modes ---
     addPaymentMode: async (mode: Omit<PaymentMode, 'id'>, userId: string) => {
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('payment_modes')
-            .insert([{ ...mode, user_id: userId }]);
+            .insert([{ ...mode, user_id: userId }])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updatePaymentMode: async (mode: PaymentMode) => {
         const { error } = await supabase
@@ -165,20 +174,22 @@ export const supabaseApi = {
 
     // --- Expenses ---
     addExpense: async (expense: Omit<Expense, 'id'>, userId: string) => {
-        // Map frontend type keys to database snake_case columns
         const dbExpense = {
             user_id: userId,
             amount: expense.amount,
             description: expense.description,
-            date: expense.date.split('T')[0], // Ensure date is in YYYY-MM-DD format for DB
+            date: expense.date.split('T')[0],
             category_id: expense.categoryId,
-            household_member_id: expense.personId, // Mapping personId to household_member_id
+            household_member_id: expense.personId,
             payment_mode_id: expense.paymentModeId,
         };
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('expenses')
-            .insert([dbExpense]);
+            .insert([dbExpense])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updateExpense: async (expense: Expense) => {
         const dbExpense = {
@@ -215,10 +226,13 @@ export const supabaseApi = {
             due_date: debt.dueDate.split('T')[0],
             status: debt.status,
         };
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('debts')
-            .insert([dbDebt]);
+            .insert([dbDebt])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updateDebt: async (debt: Debt) => {
         const dbDebt = {
@@ -255,10 +269,13 @@ export const supabaseApi = {
             start_date: chit.startDate.split('T')[0],
             status: chit.status,
         };
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('chit_funds')
-            .insert([dbChit]);
+            .insert([dbChit])
+            .select()
+            .single();
         if (error) throw new Error(error.message);
+        return data;
     },
     updateChitFund: async (chit: ChitFund) => {
         const dbChit = {

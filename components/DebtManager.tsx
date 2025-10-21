@@ -5,10 +5,13 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Card from '../components/ui/Card';
 import { Edit, Trash, PlusCircle, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) => Promise<void>; onCancel: () => void; }> = ({ debt, onSave, onCancel }) => {
-    const { people } = useAppContext();
+    const { people, addPerson } = useAppContext();
     const [isSaving, setIsSaving] = useState(false);
+    const [showNewPersonInput, setShowNewPersonInput] = useState(false);
+    const [newPersonName, setNewPersonName] = useState('');
     
     const [formData, setFormData] = useState({
         personId: debt?.personId || people[0]?.id || '',
@@ -22,14 +25,41 @@ const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'amount' ? parseFloat(value) : value }));
+        if (name === 'personId' && value === '__add_new__') {
+            setShowNewPersonInput(true);
+        } else {
+            if (name === 'personId') {
+                setShowNewPersonInput(false);
+            }
+            setFormData(prev => ({ ...prev, [name]: name === 'amount' ? parseFloat(value) : value }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
+        
+        let finalPersonId = formData.personId;
+
+        if (showNewPersonInput && newPersonName.trim() !== '') {
+            const newPerson = await addPerson({ name: newPersonName.trim() });
+            if (newPerson) {
+                finalPersonId = newPerson.id;
+            } else {
+                setIsSaving(false);
+                return; // Error toast is shown by addPerson
+            }
+        }
+
+        if (!finalPersonId || finalPersonId === '__add_new__') {
+            toast.error("Please select or add a person.");
+            setIsSaving(false);
+            return;
+        }
+
         const debtData = {
             ...formData,
+            personId: finalPersonId,
             issueDate: new Date(formData.issueDate).toISOString(),
             dueDate: new Date(formData.dueDate).toISOString(),
         };
@@ -53,9 +83,27 @@ const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium">Person</label>
-                    <select name="personId" value={formData.personId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                        {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </select>
+                    {showNewPersonInput ? (
+                        <div className="flex items-center gap-2 mt-1">
+                            <input 
+                                type="text" 
+                                placeholder="New Person's Name"
+                                value={newPersonName}
+                                onChange={(e) => setNewPersonName(e.target.value)}
+                                className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                autoFocus
+                            />
+                            <Button type="button" variant="secondary" size="sm" onClick={() => {
+                                setShowNewPersonInput(false);
+                                setFormData(prev => ({ ...prev, personId: people[0]?.id || '' }));
+                            }}>Cancel</Button>
+                        </div>
+                    ) : (
+                        <select name="personId" value={formData.personId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            {people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            <option value="__add_new__">-- Add New Person --</option>
+                        </select>
+                    )}
                 </div>
                 <div>
                     <label className="block text-sm font-medium">Type</label>
