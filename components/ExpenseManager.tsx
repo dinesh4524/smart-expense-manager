@@ -5,8 +5,10 @@ import Button from './ui/Button';
 import Modal from './ui/Modal';
 import { Edit, Trash, PlusCircle } from 'lucide-react';
 
-const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense, 'id'> | Expense) => void; onCancel: () => void; }> = ({ expense, onSave, onCancel }) => {
+const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense, 'id'> | Expense) => Promise<void>; onCancel: () => void; }> = ({ expense, onSave, onCancel }) => {
     const { categories, people, paymentModes } = useAppContext();
+    const [isSaving, setIsSaving] = useState(false);
+    
     const [formData, setFormData] = useState({
         date: expense ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
         description: expense?.description || '',
@@ -21,20 +23,30 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
         setFormData(prev => ({ ...prev, [name]: name === 'amount' ? parseFloat(value) : value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.amount <= 0) {
             alert("Amount must be greater than zero.");
             return;
         }
+        
+        setIsSaving(true);
         const expenseData = {
             ...formData,
             date: new Date(formData.date).toISOString(),
         };
-        if (expense) {
-            onSave({ ...expense, ...expenseData });
-        } else {
-            onSave(expenseData);
+        
+        try {
+            if (expense) {
+                await onSave({ ...expense, ...expenseData });
+            } else {
+                await onSave(expenseData);
+            }
+            onCancel();
+        } catch (error) {
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -71,8 +83,10 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
                 </select>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                </Button>
             </div>
         </form>
     );
@@ -83,6 +97,7 @@ const ExpenseManager: React.FC = () => {
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingExpense, setEditingExpense] = useState<Expense | undefined>(undefined);
     const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingExpense(undefined);
@@ -94,19 +109,25 @@ const ExpenseManager: React.FC = () => {
         setModalOpen(true);
     };
 
-    const handleSave = (expenseData: Omit<Expense, 'id'> | Expense) => {
+    const handleSave = async (expenseData: Omit<Expense, 'id'> | Expense) => {
         if ('id' in expenseData) {
-            updateExpense(expenseData);
+            await updateExpense(expenseData);
         } else {
-            addExpense(expenseData);
+            await addExpense(expenseData);
         }
-        setModalOpen(false);
     };
     
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingExpense) {
-            deleteExpense(deletingExpense.id);
-            setDeletingExpense(null);
+            setIsDeleting(true);
+            try {
+                await deleteExpense(deletingExpense.id);
+                setDeletingExpense(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -194,8 +215,10 @@ const ExpenseManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingExpense(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingExpense(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import type { Debt } from '../types';
-import Button from './ui/Button';
-import Modal from './ui/Modal';
-import Card from './ui/Card';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
+import Card from '../components/ui/Card';
 import { Edit, Trash, PlusCircle, CheckCircle } from 'lucide-react';
 
-const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) => void; onCancel: () => void; }> = ({ debt, onSave, onCancel }) => {
+const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) => Promise<void>; onCancel: () => void; }> = ({ debt, onSave, onCancel }) => {
     const { people } = useAppContext();
+    const [isSaving, setIsSaving] = useState(false);
+    
     const [formData, setFormData] = useState({
         personId: debt?.personId || people[0]?.id || '',
         amount: debt?.amount || 0,
@@ -23,17 +25,26 @@ const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) 
         setFormData(prev => ({ ...prev, [name]: name === 'amount' ? parseFloat(value) : value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const debtData = {
             ...formData,
             issueDate: new Date(formData.issueDate).toISOString(),
             dueDate: new Date(formData.dueDate).toISOString(),
         };
-        if (debt) {
-            onSave({ ...debt, ...debtData });
-        } else {
-            onSave(debtData);
+        
+        try {
+            if (debt) {
+                await onSave({ ...debt, ...debtData });
+            } else {
+                await onSave(debtData);
+            }
+            onCancel();
+        } catch (error) {
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -73,8 +84,10 @@ const DebtForm: React.FC<{ debt?: Debt; onSave: (debt: Omit<Debt, 'id'> | Debt) 
                 </div>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save Debt</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Debt'}
+                </Button>
             </div>
         </form>
     );
@@ -85,6 +98,7 @@ const DebtManager: React.FC = () => {
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingDebt, setEditingDebt] = useState<Debt | undefined>(undefined);
     const [deletingDebt, setDeletingDebt] = useState<Debt | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingDebt(undefined);
@@ -96,24 +110,30 @@ const DebtManager: React.FC = () => {
         setModalOpen(true);
     };
 
-    const handleSave = (debtData: Omit<Debt, 'id'> | Debt) => {
+    const handleSave = async (debtData: Omit<Debt, 'id'> | Debt) => {
         if ('id' in debtData) {
-            updateDebt(debtData);
+            await updateDebt(debtData);
         } else {
-            addDebt(debtData);
+            await addDebt(debtData);
         }
-        setModalOpen(false);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingDebt) {
-            deleteDebt(deletingDebt.id);
-            setDeletingDebt(null);
+            setIsDeleting(true);
+            try {
+                await deleteDebt(deletingDebt.id);
+                setDeletingDebt(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
     
-    const handleMarkAsPaid = (debt: Debt) => {
-        updateDebt({ ...debt, status: 'paid' });
+    const handleMarkAsPaid = async (debt: Debt) => {
+        await updateDebt({ ...debt, status: 'paid' });
     };
     
     const isOverdue = (debt: Debt) => {
@@ -188,8 +208,10 @@ const DebtManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingDebt(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingDebt(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >

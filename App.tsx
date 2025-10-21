@@ -14,16 +14,17 @@ import LoginPage from './components/LoginPage';
 import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
 import AdminPage from './components/AdminPage';
-import { AppProvider } from './contexts/AppContext';
-import { SessionContextProvider, useSession } from './src/contexts/SessionContext'; // Corrected path
-import { supabase } from './src/integrations/supabase/client'; // Corrected path
-import type { User as AppUser } from './types'; // Renamed to avoid conflict with Supabase User
+import { AppProvider, useAppContext } from './contexts/AppContext';
+import { SessionContextProvider, useSession } from './src/contexts/SessionContext';
+import { supabase } from './src/integrations/supabase/client';
+import type { User as AppUser } from './types';
 
 type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
 type UnauthenticatedView = 'landing' | 'login' | 'register';
 
-const AppContent: React.FC = () => {
-  const { session, user, isLoading } = useSession(); // Use the session from context
+const AppContentInner: React.FC = () => {
+  const { isLoadingData } = useAppContext();
+  const { session, user } = useSession(); 
   const [view, setView] = useState<View>('dashboard');
   const [unauthenticatedView, setUnauthenticatedView] = useState<UnauthenticatedView>('landing');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -67,6 +68,14 @@ const AppContent: React.FC = () => {
   );
 
   const renderView = () => {
+    if (isLoadingData) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <p className="text-lg text-gray-600 dark:text-gray-300">Loading user data...</p>
+            </div>
+        );
+    }
+    
     // Assuming 'admin' role can be checked from user metadata or a profiles table
     const isAdmin = user?.user_metadata?.role === 'admin'; // Or fetch from profiles table
     switch (view) {
@@ -89,7 +98,8 @@ const AppContent: React.FC = () => {
       case 'settings':
         return <SettingsPage theme={theme} toggleTheme={toggleTheme} />;
       case 'admin':
-        return isAdmin ? <AdminPage currentUser={user as AppUser} /> : <Dashboard setView={setView} />; // Cast Supabase User to AppUser
+        // We pass a dummy user object since AdminPage no longer relies on local user data
+        return isAdmin ? <AdminPage currentUser={user as AppUser} /> : <Dashboard setView={setView} />; 
       default:
         return <Dashboard setView={setView} />;
     }
@@ -136,64 +146,73 @@ const AppContent: React.FC = () => {
     </>
   );
   
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <p className="text-lg text-gray-600 dark:text-gray-300">Loading application...</p>
-      </div>
-    );
-  }
-
-  if (!session) {
-    switch (unauthenticatedView) {
-      case 'landing':
-        return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
-      case 'login':
-        return <LoginPage onNavigateToLanding={() => setUnauthenticatedView('landing')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
-      case 'register':
-        return <RegisterPage onNavigateToLogin={() => setUnauthenticatedView('login')} />;
-      default:
-         return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
-    }
-  }
-
   return (
-    <AppProvider>
-      <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-        {/* Mobile Sidebar */}
-        <div
-          className={`fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity lg:hidden ${
-            isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-        <aside
-          className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform lg:translate-x-0 ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          {sidebarContent}
-        </aside>
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      {/* Mobile Sidebar */}
+      <div
+        className={`fixed inset-0 z-30 bg-black bg-opacity-50 transition-opacity lg:hidden ${
+          isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      ></div>
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform lg:translate-x-0 ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {sidebarContent}
+      </aside>
 
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 bg-white dark:bg-gray-800 shadow-md">
-          {sidebarContent}
-        </aside>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-64 bg-white dark:bg-gray-800 shadow-md">
+        {sidebarContent}
+      </aside>
 
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-md lg:justify-end">
-            <button className="lg:hidden text-gray-600 dark:text-gray-300" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-              <Menu size={24} />
-            </button>
-            <div className="font-semibold text-lg capitalize">{view}</div>
-          </header>
-          <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-            {renderView()}
-          </div>
-        </main>
-      </div>
-    </AppProvider>
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <header className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 shadow-md lg:justify-end">
+          <button className="lg:hidden text-gray-600 dark:text-gray-300" onClick={() => setSidebarOpen(!isSidebarOpen)}>
+            <Menu size={24} />
+          </button>
+          <div className="font-semibold text-lg capitalize">{view}</div>
+        </header>
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+          {renderView()}
+        </div>
+      </main>
+    </div>
   );
+};
+
+const AppContent: React.FC = () => {
+    const { session, isLoading } = useSession();
+    const [unauthenticatedView, setUnauthenticatedView] = useState<'landing' | 'login' | 'register'>('landing');
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+                <p className="text-lg text-gray-600 dark:text-gray-300">Loading application...</p>
+            </div>
+        );
+    }
+
+    if (!session) {
+        switch (unauthenticatedView) {
+            case 'landing':
+                return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
+            case 'login':
+                return <LoginPage onNavigateToLanding={() => setUnauthenticatedView('landing')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
+            case 'register':
+                return <RegisterPage onNavigateToLogin={() => setUnauthenticatedView('login')} />;
+            default:
+                return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
+        }
+    }
+
+    return (
+        <AppProvider>
+            <AppContentInner />
+        </AppProvider>
+    );
 };
 
 const App: React.FC = () => (

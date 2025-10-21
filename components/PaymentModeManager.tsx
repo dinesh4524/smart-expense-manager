@@ -6,17 +6,26 @@ import Modal from './ui/Modal';
 import { Edit, Trash, PlusCircle } from 'lucide-react';
 import Card from './ui/Card';
 
-const PaymentModeForm: React.FC<{ mode?: PaymentMode; onSave: (mode: Omit<PaymentMode, 'id'> | PaymentMode) => void; onCancel: () => void; }> = ({ mode, onSave, onCancel }) => {
+const PaymentModeForm: React.FC<{ mode?: PaymentMode; onSave: (mode: Omit<PaymentMode, 'id'> | PaymentMode) => Promise<void>; onCancel: () => void; }> = ({ mode, onSave, onCancel }) => {
     const [name, setName] = useState(mode?.name || '');
     const [icon, setIcon] = useState(mode?.icon || '');
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const modeData = { name, icon };
-        if (mode) {
-            onSave({ ...mode, ...modeData });
-        } else {
-            onSave(modeData);
+        try {
+            if (mode) {
+                await onSave({ ...mode, ...modeData });
+            } else {
+                await onSave(modeData);
+            }
+            onCancel();
+        } catch (error) {
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -31,8 +40,10 @@ const PaymentModeForm: React.FC<{ mode?: PaymentMode; onSave: (mode: Omit<Paymen
                 <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                </Button>
             </div>
         </form>
     );
@@ -44,6 +55,7 @@ const PaymentModeManager: React.FC = () => {
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingMode, setEditingMode] = useState<PaymentMode | undefined>(undefined);
     const [deletingMode, setDeletingMode] = useState<PaymentMode | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingMode(undefined);
@@ -55,19 +67,25 @@ const PaymentModeManager: React.FC = () => {
         setModalOpen(true);
     };
 
-    const handleSave = (modeData: Omit<PaymentMode, 'id'> | PaymentMode) => {
+    const handleSave = async (modeData: Omit<PaymentMode, 'id'> | PaymentMode) => {
         if ('id' in modeData) {
-            updatePaymentMode(modeData);
+            await updatePaymentMode(modeData);
         } else {
-            addPaymentMode(modeData);
+            await addPaymentMode(modeData);
         }
-        setModalOpen(false);
     };
     
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingMode) {
-            deletePaymentMode(deletingMode.id);
-            setDeletingMode(null);
+            setIsDeleting(true);
+            try {
+                await deletePaymentMode(deletingMode.id);
+                setDeletingMode(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -115,8 +133,10 @@ const PaymentModeManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingMode(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingMode(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >

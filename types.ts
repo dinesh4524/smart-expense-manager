@@ -7,7 +7,7 @@ export interface Expense {
   description: string;
   amount: number;
   categoryId: string;
-  personId: string;
+  personId: string; // Renamed from personId to householdMemberId in DB, but keeping personId in frontend for simplicity
   paymentModeId: string;
   receiptUrl?: string; // Optional URL for uploaded receipt
 }
@@ -18,7 +18,7 @@ export interface Category {
   icon?: string; // Emoji or icon name
 }
 
-export interface Person {
+export interface HouseholdMember {
   id: string;
   name: string;
 }
@@ -31,7 +31,7 @@ export interface PaymentMode {
 
 export interface Debt {
     id: string;
-    personId: string;
+    personId: string; // References HouseholdMember ID
     amount: number;
     type: 'loaned' | 'borrowed';
     description: string;
@@ -55,53 +55,50 @@ export type Settings = {
   theme: 'light' | 'dark';
 };
 
-// Extend Supabase's User type or define a new one based on what you need from Supabase
-export interface User extends SupabaseUser {
-  // Supabase User already has id, email.
-  // You might add custom profile fields here if they are fetched from your 'profiles' table
-  // For now, we'll assume 'name' and 'role' come from user_metadata or a joined profiles table.
-  // The 'password' field is removed as it's not part of the client-side user object.
-  name: string; // Example: from user_metadata or profiles table
-  role: 'admin' | 'user'; // Example: from user_metadata or profiles table
+// Define a Profile type for data stored in the public.profiles table
+export interface Profile {
+  id: string; // References auth.users.id
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
 }
+
+// We will use SupabaseUser for authentication and Profile for user data.
+// The AppContext will manage the current user's profile data.
 
 export interface AppContextType {
   expenses: Expense[];
   categories: Category[];
-  people: Person[];
+  people: HouseholdMember[]; // Renamed to HouseholdMember in type, but keeping 'people' key for context compatibility
   paymentModes: PaymentMode[];
   debts: Debt[];
   chitFunds: ChitFund[];
-  users: User[];
   settings: Settings;
+  isLoadingData: boolean;
   // Expenses
-  addExpense: (expense: Omit<Expense, 'id'>) => void;
-  updateExpense: (expense: Expense) => void;
-  deleteExpense: (id: string) => void;
+  addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  updateExpense: (expense: Expense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   // Categories
-  addCategory: (category: Omit<Category, 'id'>) => void;
-  updateCategory: (category: Category) => void;
-  deleteCategory: (id: string) => void;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  updateCategory: (category: Category) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   // People
-  addPerson: (person: Omit<Person, 'id'>) => void;
-  updatePerson: (person: Person) => void;
-  deletePerson: (id: string) => void;
+  addPerson: (person: Omit<HouseholdMember, 'id'>) => Promise<void>;
+  updatePerson: (person: HouseholdMember) => Promise<void>;
+  deletePerson: (id: string) => Promise<void>;
   // Payment Modes
-  addPaymentMode: (mode: Omit<PaymentMode, 'id'>) => void;
-  updatePaymentMode: (mode: PaymentMode) => void;
-  deletePaymentMode: (id: string) => void;
+  addPaymentMode: (mode: Omit<PaymentMode, 'id'>) => Promise<void>;
+  updatePaymentMode: (mode: PaymentMode) => Promise<void>;
+  deletePaymentMode: (id: string) => Promise<void>;
   // Debts
-  addDebt: (debt: Omit<Debt, 'id'>) => void;
-  updateDebt: (debt: Debt) => void;
-  deleteDebt: (id: string) => void;
+  addDebt: (debt: Omit<Debt, 'id'>) => Promise<void>;
+  updateDebt: (debt: Debt) => Promise<void>;
+  deleteDebt: (id: string) => Promise<void>;
   // Chit Funds
-  addChitFund: (chit: Omit<ChitFund, 'id'>) => void;
-  updateChitFund: (chit: ChitFund) => void;
-  deleteChitFund: (id: string) => void;
-  // Users
-  addUser: (user: Omit<User, 'id'>) => User;
-  updateUser: (user: User) => User;
-  deleteUser: (id: string) => void;
+  addChitFund: (chit: Omit<ChitFund, 'id'>) => Promise<void>;
+  updateChitFund: (chit: ChitFund) => Promise<void>;
+  deleteChitFund: (id: string) => Promise<void>;
   // Settings
   updateSettings: (newSettings: Partial<Settings>) => void;
   // Getters

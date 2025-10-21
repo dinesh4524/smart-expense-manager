@@ -6,17 +6,27 @@ import Modal from './ui/Modal';
 import { Edit, Trash, PlusCircle, Tag } from 'lucide-react';
 import Card from './ui/Card';
 
-const CategoryForm: React.FC<{ category?: Category; onSave: (category: Omit<Category, 'id'> | Category) => void; onCancel: () => void; }> = ({ category, onSave, onCancel }) => {
+const CategoryForm: React.FC<{ category?: Category; onSave: (category: Omit<Category, 'id'> | Category) => Promise<void>; onCancel: () => void; }> = ({ category, onSave, onCancel }) => {
     const [name, setName] = useState(category?.name || '');
     const [icon, setIcon] = useState(category?.icon || '');
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const categoryData = { name, icon };
-        if (category) {
-            onSave({ ...category, ...categoryData });
-        } else {
-            onSave(categoryData);
+        try {
+            if (category) {
+                await onSave({ ...category, ...categoryData });
+            } else {
+                await onSave(categoryData);
+            }
+            onCancel(); // Close modal on success
+        } catch (error) {
+            // Error handling is done in AppContext wrapper, just log here if needed
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -31,8 +41,10 @@ const CategoryForm: React.FC<{ category?: Category; onSave: (category: Omit<Cate
                 <input type="text" value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="e.g., 🛒" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                </Button>
             </div>
         </form>
     );
@@ -44,6 +56,7 @@ const CategoryManager: React.FC = () => {
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | undefined>(undefined);
     const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingCategory(undefined);
@@ -55,19 +68,25 @@ const CategoryManager: React.FC = () => {
         setModalOpen(true);
     };
 
-    const handleSave = (categoryData: Omit<Category, 'id'> | Category) => {
+    const handleSave = async (categoryData: Omit<Category, 'id'> | Category) => {
         if ('id' in categoryData) {
-            updateCategory(categoryData);
+            await updateCategory(categoryData);
         } else {
-            addCategory(categoryData);
+            await addCategory(categoryData);
         }
-        setModalOpen(false);
     };
     
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingCategory) {
-            deleteCategory(deletingCategory.id);
-            setDeletingCategory(null);
+            setIsDeleting(true);
+            try {
+                await deleteCategory(deletingCategory.id);
+                setDeletingCategory(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -119,8 +138,10 @@ const CategoryManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingCategory(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingCategory(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >

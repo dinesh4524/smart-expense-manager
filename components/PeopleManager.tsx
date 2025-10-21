@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
-import type { Person } from '../types';
+import type { HouseholdMember } from '../types';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
 import { Edit, Trash, PlusCircle } from 'lucide-react';
 import Card from './ui/Card';
 
-const PersonForm: React.FC<{ person?: Person; onSave: (person: Omit<Person, 'id'> | Person) => void; onCancel: () => void; }> = ({ person, onSave, onCancel }) => {
+const PersonForm: React.FC<{ person?: HouseholdMember; onSave: (person: Omit<HouseholdMember, 'id'> | HouseholdMember) => Promise<void>; onCancel: () => void; }> = ({ person, onSave, onCancel }) => {
     const [name, setName] = useState(person?.name || '');
+    const [isSaving, setIsSaving] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const personData = { name };
-        if (person) {
-            onSave({ ...person, ...personData });
-        } else {
-            onSave(personData);
+        try {
+            if (person) {
+                await onSave({ ...person, ...personData });
+            } else {
+                await onSave(personData);
+            }
+            onCancel();
+        } catch (error) {
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -26,8 +35,10 @@ const PersonForm: React.FC<{ person?: Person; onSave: (person: Omit<Person, 'id'
                 <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                </Button>
             </div>
         </form>
     );
@@ -37,32 +48,39 @@ const PersonForm: React.FC<{ person?: Person; onSave: (person: Omit<Person, 'id'
 const PeopleManager: React.FC = () => {
     const { people, addPerson, updatePerson, deletePerson } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
-    const [editingPerson, setEditingPerson] = useState<Person | undefined>(undefined);
-    const [deletingPerson, setDeletingPerson] = useState<Person | null>(null);
+    const [editingPerson, setEditingPerson] = useState<HouseholdMember | undefined>(undefined);
+    const [deletingPerson, setDeletingPerson] = useState<HouseholdMember | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingPerson(undefined);
         setModalOpen(true);
     };
 
-    const openEditModal = (person: Person) => {
+    const openEditModal = (person: HouseholdMember) => {
         setEditingPerson(person);
         setModalOpen(true);
     };
 
-    const handleSave = (personData: Omit<Person, 'id'> | Person) => {
+    const handleSave = async (personData: Omit<HouseholdMember, 'id'> | HouseholdMember) => {
         if ('id' in personData) {
-            updatePerson(personData);
+            await updatePerson(personData);
         } else {
-            addPerson(personData);
+            await addPerson(personData);
         }
-        setModalOpen(false);
     };
     
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingPerson) {
-            deletePerson(deletingPerson.id);
-            setDeletingPerson(null);
+            setIsDeleting(true);
+            try {
+                await deletePerson(deletingPerson.id);
+                setDeletingPerson(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -107,8 +125,10 @@ const PeopleManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingPerson(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingPerson(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >

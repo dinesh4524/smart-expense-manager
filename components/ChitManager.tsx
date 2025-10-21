@@ -6,7 +6,8 @@ import Modal from './ui/Modal';
 import Card from './ui/Card';
 import { Edit, Trash, PlusCircle } from 'lucide-react';
 
-const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'id'> | ChitFund) => void; onCancel: () => void; }> = ({ chit, onSave, onCancel }) => {
+const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'id'> | ChitFund) => Promise<void>; onCancel: () => void; }> = ({ chit, onSave, onCancel }) => {
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: chit?.name || '',
         totalAmount: chit?.totalAmount || 0,
@@ -21,16 +22,25 @@ const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'i
         setFormData(prev => ({ ...prev, [name]: ['totalAmount', 'monthlyInstallment', 'durationMonths'].includes(name) ? parseFloat(value) : value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSaving(true);
         const chitData = {
             ...formData,
             startDate: new Date(formData.startDate).toISOString(),
         };
-        if (chit) {
-            onSave({ ...chit, ...chitData });
-        } else {
-            onSave(chitData);
+        
+        try {
+            if (chit) {
+                await onSave({ ...chit, ...chitData });
+            } else {
+                await onSave(chitData);
+            }
+            onCancel();
+        } catch (error) {
+            console.error("Save failed in form:", error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -68,8 +78,10 @@ const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'i
                 </select>
             </div>
             <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-                <Button type="submit">Save Chit Fund</Button>
+                <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save Chit Fund'}
+                </Button>
             </div>
         </form>
     );
@@ -80,6 +92,7 @@ const ChitManager: React.FC = () => {
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingChit, setEditingChit] = useState<ChitFund | undefined>(undefined);
     const [deletingChit, setDeletingChit] = useState<ChitFund | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const openAddModal = () => {
         setEditingChit(undefined);
@@ -91,19 +104,25 @@ const ChitManager: React.FC = () => {
         setModalOpen(true);
     };
 
-    const handleSave = (chitData: Omit<ChitFund, 'id'> | ChitFund) => {
+    const handleSave = async (chitData: Omit<ChitFund, 'id'> | ChitFund) => {
         if ('id' in chitData) {
-            updateChitFund(chitData);
+            await updateChitFund(chitData);
         } else {
-            addChitFund(chitData);
+            await addChitFund(chitData);
         }
-        setModalOpen(false);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (deletingChit) {
-            deleteChitFund(deletingChit.id);
-            setDeletingChit(null);
+            setIsDeleting(true);
+            try {
+                await deleteChitFund(deletingChit.id);
+                setDeletingChit(null);
+            } catch (error) {
+                console.error("Delete failed:", error);
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
     
@@ -176,8 +195,10 @@ const ChitManager: React.FC = () => {
                     title="Confirm Deletion"
                     footer={
                         <>
-                            <Button variant="secondary" onClick={() => setDeletingChit(null)}>Cancel</Button>
-                            <Button variant="danger" onClick={confirmDelete}>Delete</Button>
+                            <Button variant="secondary" onClick={() => setDeletingChit(null)} disabled={isDeleting}>Cancel</Button>
+                            <Button variant="danger" onClick={confirmDelete} disabled={isDeleting}>
+                                {isDeleting ? 'Deleting...' : 'Delete'}
+                            </Button>
                         </>
                     }
                 >
