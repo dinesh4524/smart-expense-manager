@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { User as SupabaseUser } from '@supabase/supabase-js'; // Import Supabase's User type
 
 export interface Expense {
   id: string;
@@ -54,12 +55,14 @@ export type Settings = {
   theme: 'light' | 'dark';
 };
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  password?: string; // Should not be sent to client in a real app
-  role: 'admin' | 'user';
+// Extend Supabase's User type or define a new one based on what you need from Supabase
+export interface User extends SupabaseUser {
+  // Supabase User already has id, email.
+  // You might add custom profile fields here if they are fetched from your 'profiles' table
+  // For now, we'll assume 'name' and 'role' come from user_metadata or a joined profiles table.
+  // The 'password' field is removed as it's not part of the client-side user object.
+  name: string; // Example: from user_metadata or profiles table
+  role: 'admin' | 'user'; // Example: from user_metadata or profiles table
 }
 
 export interface AppContextType {

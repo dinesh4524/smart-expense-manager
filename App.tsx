@@ -15,22 +15,19 @@ import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
 import AdminPage from './components/AdminPage';
 import { AppProvider } from './contexts/AppContext';
-import { api } from './services/mockApi';
-import type { User } from './types';
-
+import { SessionContextProvider, useSession } from './contexts/SessionContext'; // Import SessionContext
+import { supabase } from './integrations/supabase/client'; // Import supabase client
+import type { User as AppUser } from './types'; // Renamed to avoid conflict with Supabase User
 
 type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
 type UnauthenticatedView = 'landing' | 'login' | 'register';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { session, user, isLoading } = useSession(); // Use the session from context
   const [view, setView] = useState<View>('dashboard');
   const [unauthenticatedView, setUnauthenticatedView] = useState<UnauthenticatedView>('landing');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -46,26 +43,10 @@ const App: React.FC = () => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
-  const handleLogin = (email: string, password: string): boolean => {
-    const user = api.login(email, password);
-    if(user) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        setCurrentUser(user);
-        return true;
-    }
-    return false;
-  };
-  
-  const handleRegister = (name:string, email: string, password: string): boolean => {
-      const newUser = api.register({name, email, password});
-      return !!newUser;
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    setCurrentUser(null);
-    setUnauthenticatedView('login');
-    setView('dashboard');
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('dashboard'); // Reset view after logout
+    setUnauthenticatedView('login'); // Redirect to login after logout
   };
 
   const NavItem = ({ icon, label, currentView, targetView }: { icon: React.ReactNode, label: string, currentView: View, targetView: View }) => (
@@ -86,6 +67,8 @@ const App: React.FC = () => {
   );
 
   const renderView = () => {
+    // Assuming 'admin' role can be checked from user metadata or a profiles table
+    const isAdmin = user?.user_metadata?.role === 'admin'; // Or fetch from profiles table
     switch (view) {
       case 'dashboard':
         return <Dashboard setView={setView} />;
@@ -106,7 +89,7 @@ const App: React.FC = () => {
       case 'settings':
         return <SettingsPage theme={theme} toggleTheme={toggleTheme} />;
       case 'admin':
-        return currentUser?.role === 'admin' ? <AdminPage currentUser={currentUser} /> : <Dashboard setView={setView} />;
+        return isAdmin ? <AdminPage currentUser={user as AppUser} /> : <Dashboard setView={setView} />; // Cast Supabase User to AppUser
       default:
         return <Dashboard setView={setView} />;
     }
@@ -136,7 +119,7 @@ const App: React.FC = () => {
           <NavItem icon={<Landmark size={20} />} label="Chit Funds" currentView={view} targetView="chits" />
           <li className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">System</li>
           <NavItem icon={<Settings size={20} />} label="Settings" currentView={view} targetView="settings" />
-          {currentUser?.role === 'admin' && (
+          {user?.user_metadata?.role === 'admin' && ( // Check admin role from Supabase user metadata
             <NavItem icon={<Shield size={20} />} label="Admin" currentView={view} targetView="admin" />
           )}
         </ul>
@@ -153,14 +136,22 @@ const App: React.FC = () => {
     </>
   );
   
-  if (!currentUser) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <p className="text-lg text-gray-600 dark:text-gray-300">Loading application...</p>
+      </div>
+    );
+  }
+
+  if (!session) {
     switch (unauthenticatedView) {
       case 'landing':
         return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
       case 'login':
-        return <LoginPage onLogin={handleLogin} onNavigateToLanding={() => setUnauthenticatedView('landing')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
+        return <LoginPage onNavigateToLanding={() => setUnauthenticatedView('landing')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
       case 'register':
-        return <RegisterPage onRegister={handleRegister} onRegisterSuccess={() => setUnauthenticatedView('login')} onNavigateToLogin={() => setUnauthenticatedView('login')} />;
+        return <RegisterPage onNavigateToLogin={() => setUnauthenticatedView('login')} />;
       default:
          return <LandingPage onNavigateToLogin={() => setUnauthenticatedView('login')} onNavigateToRegister={() => setUnauthenticatedView('register')} />;
     }
@@ -204,5 +195,11 @@ const App: React.FC = () => {
     </AppProvider>
   );
 };
+
+const App: React.FC = () => (
+  <SessionContextProvider>
+    <AppContent />
+  </SessionContextProvider>
+);
 
 export default App;
