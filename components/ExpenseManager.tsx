@@ -287,25 +287,25 @@ const ExpenseManager: React.FC = () => {
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="p-3">Date</th>
+                                    <th className="p-3 whitespace-nowrap">Date</th>
                                     <th className="p-3">Description</th>
-                                    <th className="p-3">Category</th>
-                                    <th className="p-3">Person</th>
-                                    <th className="p-3">Payment Mode</th>
-                                    <th className="p-3 text-right">Amount</th>
-                                    <th className="p-3 text-center">Actions</th>
+                                    <th className="p-3 whitespace-nowrap">Category</th>
+                                    <th className="p-3 whitespace-nowrap">Person</th>
+                                    <th className="p-3 whitespace-nowrap">Payment Mode</th>
+                                    <th className="p-3 whitespace-nowrap text-right">Amount</th>
+                                    <th className="p-3 whitespace-nowrap text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredAndSortedExpenses.map(expense => (
                                     <tr key={expense.id} className="border-b dark:border-gray-700">
-                                        <td className="p-3">{new Date(expense.date).toLocaleDateString()}</td>
+                                        <td className="p-3 whitespace-nowrap">{new Date(expense.date).toLocaleDateString()}</td>
                                         <td className="p-3">{expense.description}</td>
-                                        <td className="p-3">{getCategoryName(expense.categoryId)}</td>
-                                        <td className="p-3">{getPersonName(expense.personId)}</td>
-                                        <td className="p-3">{getPaymentModeName(expense.paymentModeId)}</td>
-                                        <td className="p-3 text-right font-medium">{settings.currency}{expense.amount.toFixed(2)}</td>
-                                        <td className="p-3 text-center">
+                                        <td className="p-3 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
+                                        <td className="p-3 whitespace-nowrap">{getPersonName(expense.personId)}</td>
+                                        <td className="p-3 whitespace-nowrap">{getPaymentModeName(expense.paymentModeId)}</td>
+                                        <td className="p-3 whitespace-nowrap text-right font-medium">{settings.currency}{expense.amount.toFixed(2)}</td>
+                                        <td className="p-3 whitespace-nowrap text-center">
                                             <button onClick={() => openEditModal(expense)} className="text-primary-600 hover:text-primary-800 mr-2"><Edit size={18} /></button>
                                             <button onClick={() => setDeletingExpense(expense)} className="text-red-600 hover:text-red-800"><Trash size={18} /></button>
                                         </td>

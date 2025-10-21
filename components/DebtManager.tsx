@@ -202,33 +202,33 @@ const DebtManager: React.FC = () => {
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="p-3">Person</th>
-                            <th className="p-3">Type</th>
+                            <th className="p-3 whitespace-nowrap">Person</th>
+                            <th className="p-3 whitespace-nowrap">Type</th>
                             <th className="p-3">Description</th>
-                            <th className="p-3">Amount</th>
-                            <th className="p-3">Due Date</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3 text-center">Actions</th>
+                            <th className="p-3 whitespace-nowrap">Amount</th>
+                            <th className="p-3 whitespace-nowrap">Due Date</th>
+                            <th className="p-3 whitespace-nowrap">Status</th>
+                            <th className="p-3 whitespace-nowrap text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {debts.map(debt => (
                             <tr key={debt.id} className={`border-b dark:border-gray-700 ${isOverdue(debt) ? 'bg-red-100 dark:bg-red-900/50' : ''}`}>
-                                <td className="p-3 font-medium">{getPersonName(debt.personId)}</td>
-                                <td className="p-3">
+                                <td className="p-3 whitespace-nowrap font-medium">{getPersonName(debt.personId)}</td>
+                                <td className="p-3 whitespace-nowrap">
                                     <span className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${debt.type === 'loaned' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
                                         {debt.type}
                                     </span>
                                 </td>
                                 <td className="p-3 text-gray-600 dark:text-gray-400">{debt.description}</td>
-                                <td className="p-3 font-semibold">{settings.currency}{debt.amount.toFixed(2)}</td>
-                                <td className={`p-3 ${isOverdue(debt) ? 'font-bold text-red-600' : ''}`}>{new Date(debt.dueDate).toLocaleDateString()}</td>
-                                <td className="p-3">
+                                <td className="p-3 whitespace-nowrap font-semibold">{settings.currency}{debt.amount.toFixed(2)}</td>
+                                <td className={`p-3 whitespace-nowrap ${isOverdue(debt) ? 'font-bold text-red-600' : ''}`}>{new Date(debt.dueDate).toLocaleDateString()}</td>
+                                <td className="p-3 whitespace-nowrap">
                                     <span className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${debt.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
                                         {debt.status}
                                     </span>
                                 </td>
-                                <td className="p-3 text-center space-x-2">
+                                <td className="p-3 whitespace-nowrap text-center space-x-2">
                                     {debt.status === 'pending' && (
                                         <button onClick={() => handleMarkAsPaid(debt)} title="Mark as Paid" className="text-green-600 hover:text-green-800"><CheckCircle size={18} /></button>
                                     )}

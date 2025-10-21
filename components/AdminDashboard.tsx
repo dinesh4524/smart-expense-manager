@@ -113,22 +113,22 @@ const AdminDashboard: React.FC = () => {
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="p-3">Name</th>
-                                <th className="p-3">Email</th>
-                                <th className="p-3">Role</th>
-                                <th className="p-3">Signed Up</th>
-                                <th className="p-3">Last Sign In</th>
-                                <th className="p-3 text-center">Actions</th>
+                                <th className="p-3 whitespace-nowrap">Name</th>
+                                <th className="p-3 whitespace-nowrap">Email</th>
+                                <th className="p-3 whitespace-nowrap">Role</th>
+                                <th className="p-3 whitespace-nowrap">Signed Up</th>
+                                <th className="p-3 whitespace-nowrap">Last Sign In</th>
+                                <th className="p-3 whitespace-nowrap text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map(user => (
                                 <tr key={user.id} className="border-b dark:border-gray-700">
-                                    <td className="p-3 font-medium">
+                                    <td className="p-3 whitespace-nowrap font-medium">
                                         {user.first_name || user.last_name ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'N/A'}
                                     </td>
-                                    <td className="p-3">{user.email}</td>
-                                    <td className="p-3">
+                                    <td className="p-3 whitespace-nowrap">{user.email}</td>
+                                    <td className="p-3 whitespace-nowrap">
                                         <span className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${
                                             user.user_metadata?.role === 'admin' 
                                             ? 'bg-primary-100 text-primary-800' 
@@ -137,9 +137,9 @@ const AdminDashboard: React.FC = () => {
                                             {user.user_metadata?.role || 'user'}
                                         </span>
                                     </td>
-                                    <td className="p-3">{new Date(user.created_at).toLocaleDateString()}</td>
-                                    <td className="p-3">{user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</td>
-                                    <td className="p-3 text-center">
+                                    <td className="p-3 whitespace-nowrap">{new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td className="p-3 whitespace-nowrap">{user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</td>
+                                    <td className="p-3 whitespace-nowrap text-center">
                                         <button 
                                             onClick={() => setDeletingUser(user)} 
                                             className="text-red-600 hover:text-red-800"

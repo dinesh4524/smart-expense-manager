@@ -176,21 +176,21 @@ const Dashboard: React.FC<DashboardProps> = ({ setView }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b dark:border-gray-700">
-                <th className="p-2">Date</th>
+                <th className="p-2 whitespace-nowrap">Date</th>
                 <th className="p-2">Description</th>
-                <th className="p-2">Category</th>
-                <th className="p-2">Person</th>
-                <th className="p-2 text-right">Amount</th>
+                <th className="p-2 whitespace-nowrap">Category</th>
+                <th className="p-2 whitespace-nowrap">Person</th>
+                <th className="p-2 whitespace-nowrap text-right">Amount</th>
               </tr>
             </thead>
             <tbody>
               {recentExpenses.map((exp) => (
                 <tr key={exp.id} className="border-b dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  <td className="p-2">{new Date(exp.date).toLocaleDateString()}</td>
+                  <td className="p-2 whitespace-nowrap">{new Date(exp.date).toLocaleDateString()}</td>
                   <td className="p-2">{exp.description}</td>
-                  <td className="p-2">{getCategoryName(exp.categoryId)}</td>
-                  <td className="p-2">{getPersonName(exp.personId)}</td>
-                  <td className="p-2 text-right font-medium">{settings.currency}{exp.amount.toFixed(2)}</td>
+                  <td className="p-2 whitespace-nowrap">{getCategoryName(exp.categoryId)}</td>
+                  <td className="p-2 whitespace-nowrap">{getPersonName(exp.personId)}</td>
+                  <td className="p-2 whitespace-nowrap text-right font-medium">{settings.currency}{exp.amount.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
