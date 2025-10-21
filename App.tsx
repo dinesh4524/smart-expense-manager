@@ -113,7 +113,7 @@ const AppContentInner: React.FC = () => {
         </div>
       </div>
       <nav className="p-4 flex flex-col justify-between h-[calc(100%-65px)]">
-        <ul>
+        <ul className="flex-grow overflow-y-auto">
           <NavItem icon={<Home size={20} />} label="Dashboard" currentView={view} targetView="dashboard" />
           <NavItem icon={<CreditCard size={20} />} label="Expenses" currentView={view} targetView="expenses" />
           <NavItem icon={<PieChart size={20} />} label="Reports" currentView={view} targetView="reports" />
