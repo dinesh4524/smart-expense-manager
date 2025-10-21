@@ -90,15 +90,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
             </div>
           </div>
         </section>
-        
-        {/* Call to Action Section */}
-        <section className="py-16 bg-primary-600 dark:bg-primary-700 text-white text-center">
-            <h3 className="text-3xl font-bold mb-4">Ready to take control of your finances?</h3>
-            <p className="text-lg mb-8 opacity-90">Join thousands of smart homeowners managing their budget effortlessly.</p>
-            <Button onClick={onNavigateToRegister} size="lg" variant="secondary" className="bg-white text-primary-600 hover:bg-gray-100">
-                Start Your Free Trial
-            </Button>
-        </section>
       </main>
 
       {/* Footer */}

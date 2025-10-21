@@ -13,11 +13,10 @@ import SettingsPage from './components/SettingsPage';
 import LoginPage from './components/LoginPage';
 import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
-import AdminPage from './components/AdminPage';
+import AdminDashboard from './components/AdminDashboard';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { SessionContextProvider, useSession } from './src/contexts/SessionContext';
 import { supabase } from './src/integrations/supabase/client';
-import type { User as AppUser } from './types';
 
 type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
 type UnauthenticatedView = 'landing' | 'login' | 'register';
@@ -76,8 +75,7 @@ const AppContentInner: React.FC = () => {
         );
     }
     
-    // Assuming 'admin' role can be checked from user metadata or a profiles table
-    const isAdmin = user?.user_metadata?.role === 'admin'; // Or fetch from profiles table
+    const isAdmin = user?.user_metadata?.role === 'admin';
     switch (view) {
       case 'dashboard':
         return <Dashboard setView={setView} />;
@@ -98,8 +96,7 @@ const AppContentInner: React.FC = () => {
       case 'settings':
         return <SettingsPage theme={theme} toggleTheme={toggleTheme} />;
       case 'admin':
-        // We pass a dummy user object since AdminPage no longer relies on local user data
-        return isAdmin ? <AdminPage currentUser={user as AppUser} /> : <Dashboard setView={setView} />; 
+        return isAdmin ? <AdminDashboard /> : <Dashboard setView={setView} />; 
       default:
         return <Dashboard setView={setView} />;
     }
