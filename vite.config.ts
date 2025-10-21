@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          // Explicitly alias react and react-dom to ensure dependencies use the external version
+          'react': 'https://aistudiocdn.com/react@^19.2.0',
+          'react-dom': 'https://aistudiocdn.com/react-dom@^19.2.0',
         }
       },
       // Explicitly mark React and ReactDOM as external to rely on importmap
