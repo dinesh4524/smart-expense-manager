@@ -15,8 +15,8 @@ import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
 import AdminPage from './components/AdminPage';
 import { AppProvider } from './contexts/AppContext';
-import { SessionContextProvider, useSession } from './contexts/SessionContext'; // Import SessionContext
-import { supabase } from './integrations/supabase/client'; // Import supabase client
+import { SessionContextProvider, useSession } from './src/contexts/SessionContext'; // Corrected path
+import { supabase } from './src/integrations/supabase/client'; // Corrected path
 import type { User as AppUser } from './types'; // Renamed to avoid conflict with Supabase User
 
 type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
