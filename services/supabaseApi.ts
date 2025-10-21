@@ -1,5 +1,5 @@
 import { supabase } from '@/src/integrations/supabase/client';
-import type { Expense, Category, HouseholdMember, PaymentMode, Debt, ChitFund, Settings } from '../types';
+import type { Expense, Category, HouseholdMember, PaymentMode, Debt, ChitFund, Settings, ChitFundAuction } from '../types';
 
 // Helper function to get the current user's ID
 const getUserId = () => {
@@ -40,7 +40,8 @@ export const supabaseApi = {
             paymentModes, 
             expenses, 
             debts, 
-            chitFunds
+            chitFunds,
+            chitFundAuctions
         ] = await Promise.all([
             fetchTable<Category>('categories'),
             fetchTable<HouseholdMember>('household_members'),
@@ -48,6 +49,7 @@ export const supabaseApi = {
             fetchTable<any>('expenses'), // Fetch as 'any' to handle snake_case
             fetchTable<any>('debts'),
             fetchTable<any>('chit_funds'),
+            fetchTable<any>('chit_fund_auctions'),
         ]);
         
         // Manually map snake_case to camelCase for frontend types
@@ -80,7 +82,18 @@ export const supabaseApi = {
             monthlyInstallment: c.monthly_installment,
             durationMonths: c.duration_months,
             startDate: c.start_date,
+            foremanCommissionRate: c.foreman_commission_rate || 0.05, // Default to 5%
             status: c.status,
+        }));
+        
+        const mappedChitFundAuctions: ChitFundAuction[] = chitFundAuctions.map((a: any) => ({
+            id: a.id,
+            chitFundId: a.chit_fund_id,
+            monthNumber: a.month_number,
+            auctionDate: a.auction_date,
+            discountAmount: a.discount_amount,
+            prizedSubscriberName: a.prized_subscriber_name,
+            isUserPrized: a.is_user_prized,
         }));
 
         // Settings are still stored locally for simplicity (currency/theme)
@@ -93,6 +106,7 @@ export const supabaseApi = {
             expenses: mappedExpenses, 
             debts: mappedDebts, 
             chitFunds: mappedChitFunds, 
+            chitFundAuctions: mappedChitFundAuctions,
             settings 
         };
     },
@@ -267,6 +281,7 @@ export const supabaseApi = {
             monthly_installment: chit.monthlyInstallment,
             duration_months: chit.durationMonths,
             start_date: chit.startDate.split('T')[0],
+            foreman_commission_rate: chit.foremanCommissionRate,
             status: chit.status,
         };
         const { data, error } = await supabase
@@ -284,6 +299,7 @@ export const supabaseApi = {
             monthly_installment: chit.monthlyInstallment,
             duration_months: chit.durationMonths,
             start_date: chit.startDate.split('T')[0],
+            foreman_commission_rate: chit.foremanCommissionRate,
             status: chit.status,
         };
         const { error } = await supabase
@@ -300,6 +316,47 @@ export const supabaseApi = {
         if (error) throw new Error(error.message);
     },
     
+    // --- Chit Fund Auctions ---
+    addChitFundAuction: async (auction: Omit<ChitFundAuction, 'id'>, userId: string) => {
+        const dbAuction = {
+            user_id: userId,
+            chit_fund_id: auction.chitFundId,
+            month_number: auction.monthNumber,
+            auction_date: auction.auctionDate.split('T')[0],
+            discount_amount: auction.discountAmount,
+            prized_subscriber_name: auction.prizedSubscriberName,
+            is_user_prized: auction.isUserPrized,
+        };
+        const { data, error } = await supabase
+            .from('chit_fund_auctions')
+            .insert([dbAuction])
+            .select()
+            .single();
+        if (error) throw new Error(error.message);
+        return data;
+    },
+    updateChitFundAuction: async (auction: ChitFundAuction) => {
+        const dbAuction = {
+            month_number: auction.monthNumber,
+            auction_date: auction.auctionDate.split('T')[0],
+            discount_amount: auction.discountAmount,
+            prized_subscriber_name: auction.prizedSubscriberName,
+            is_user_prized: auction.isUserPrized,
+        };
+        const { error } = await supabase
+            .from('chit_fund_auctions')
+            .update(dbAuction)
+            .eq('id', auction.id);
+        if (error) throw new Error(error.message);
+    },
+    deleteChitFundAuction: async (id: string) => {
+        const { error } = await supabase
+            .from('chit_fund_auctions')
+            .delete()
+            .eq('id', id);
+        if (error) throw new Error(error.message);
+    },
+
     // --- Settings (Still local for now) ---
     updateSettings: (newSettings: Partial<Settings>): Settings => {
         const currentSettings: Settings = JSON.parse(localStorage.getItem('settings') || '{"currency": "₹", "theme": "light"}');

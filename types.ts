@@ -47,7 +47,18 @@ export interface ChitFund {
     monthlyInstallment: number;
     durationMonths: number;
     startDate: string;
+    foremanCommissionRate: number; // New field: e.g., 0.05 for 5%
     status: 'active' | 'closed';
+}
+
+export interface ChitFundAuction {
+    id: string;
+    chitFundId: string;
+    monthNumber: number;
+    auctionDate: string;
+    discountAmount: number; // Total discount/bid amount
+    prizedSubscriberName: string; // Name of the winner this month
+    isUserPrized: boolean; // True if the current user won this auction
 }
 
 export type Settings = {
@@ -73,6 +84,7 @@ export interface AppContextType {
   paymentModes: PaymentMode[];
   debts: Debt[];
   chitFunds: ChitFund[];
+  chitFundAuctions: ChitFundAuction[]; // New state for auctions
   settings: Settings;
   isLoadingData: boolean;
   // Expenses
@@ -99,6 +111,10 @@ export interface AppContextType {
   addChitFund: (chit: Omit<ChitFund, 'id'>) => Promise<ChitFund | undefined>;
   updateChitFund: (chit: ChitFund) => Promise<void>;
   deleteChitFund: (id: string) => Promise<void>;
+  // Chit Fund Auctions
+  addChitFundAuction: (auction: Omit<ChitFundAuction, 'id'>) => Promise<ChitFundAuction | undefined>;
+  updateChitFundAuction: (auction: ChitFundAuction) => Promise<void>;
+  deleteChitFundAuction: (id: string) => Promise<void>;
   // Settings
   updateSettings: (newSettings: Partial<Settings>) => void;
   // Getters

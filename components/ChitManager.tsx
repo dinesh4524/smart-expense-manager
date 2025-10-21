@@ -4,7 +4,8 @@ import type { ChitFund } from '../types';
 import Button from './ui/Button';
 import Modal from './ui/Modal';
 import Card from './ui/Card';
-import { Edit, Trash, PlusCircle } from 'lucide-react';
+import { Edit, Trash, PlusCircle, Eye } from 'lucide-react';
+import ChitDetails from './ChitDetails';
 
 const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'id'> | ChitFund) => Promise<void>; onCancel: () => void; }> = ({ chit, onSave, onCancel }) => {
     const [isSaving, setIsSaving] = useState(false);
@@ -14,19 +15,27 @@ const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'i
         monthlyInstallment: chit?.monthlyInstallment || 0,
         durationMonths: chit?.durationMonths || 0,
         startDate: chit ? chit.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
+        foremanCommissionRate: (chit?.foremanCommissionRate * 100) || 5, // Display as percentage
         status: chit?.status || 'active',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: ['totalAmount', 'monthlyInstallment', 'durationMonths'].includes(name) ? parseFloat(value) : value }));
+        setFormData(prev => ({ ...prev, [name]: ['totalAmount', 'monthlyInstallment', 'durationMonths', 'foremanCommissionRate'].includes(name) ? parseFloat(value) : value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
+        
+        const commissionRate = parseFloat(String(formData.foremanCommissionRate)) / 100;
+        
         const chitData = {
             ...formData,
+            foremanCommissionRate: commissionRate,
+            totalAmount: parseFloat(String(formData.totalAmount)),
+            monthlyInstallment: parseFloat(String(formData.monthlyInstallment)),
+            durationMonths: parseInt(String(formData.durationMonths)),
             startDate: new Date(formData.startDate).toISOString(),
         };
         
@@ -52,7 +61,7 @@ const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'i
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div>
-                    <label className="block text-sm font-medium">Total Amount</label>
+                    <label className="block text-sm font-medium">Total Chit Value (Gross Amount)</label>
                     <input type="number" name="totalAmount" value={formData.totalAmount} onChange={handleChange} required min="0" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
                 </div>
                 <div>
@@ -62,13 +71,17 @@ const ChitFundForm: React.FC<{ chit?: ChitFund; onSave: (chit: Omit<ChitFund, 'i
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium">Duration (Months)</label>
+                    <label className="block text-sm font-medium">Duration (Months / Members)</label>
                     <input type="number" name="durationMonths" value={formData.durationMonths} onChange={handleChange} required min="1" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
                 </div>
                 <div>
                     <label className="block text-sm font-medium">Start Date</label>
                     <input type="date" name="startDate" value={formData.startDate} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
                 </div>
+            </div>
+            <div>
+                <label className="block text-sm font-medium">Foreman Commission Rate (%)</label>
+                <input type="number" name="foremanCommissionRate" value={formData.foremanCommissionRate} onChange={handleChange} required min="0" max="10" step="0.1" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
              <div>
                 <label className="block text-sm font-medium">Status</label>
@@ -93,6 +106,7 @@ const ChitManager: React.FC = () => {
     const [editingChit, setEditingChit] = useState<ChitFund | undefined>(undefined);
     const [deletingChit, setDeletingChit] = useState<ChitFund | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [viewingChit, setViewingChit] = useState<ChitFund | null>(null); // State for detailed view
 
     const openAddModal = () => {
         setEditingChit(undefined);
@@ -126,6 +140,10 @@ const ChitManager: React.FC = () => {
         }
     };
     
+    if (viewingChit) {
+        return <ChitDetails chit={viewingChit} onBack={() => setViewingChit(null)} />;
+    }
+    
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -148,13 +166,14 @@ const ChitManager: React.FC = () => {
                                     </span>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => openEditModal(chit)} className="text-primary-600 hover:text-primary-800"><Edit size={18} /></button>
-                                    <button onClick={() => setDeletingChit(chit)} className="text-red-600 hover:text-red-800"><Trash size={18} /></button>
+                                    <button onClick={() => setViewingChit(chit)} title="View Details" className="text-blue-600 hover:text-blue-800"><Eye size={18} /></button>
+                                    <button onClick={() => openEditModal(chit)} title="Edit" className="text-primary-600 hover:text-primary-800"><Edit size={18} /></button>
+                                    <button onClick={() => setDeletingChit(chit)} title="Delete" className="text-red-600 hover:text-red-800"><Trash size={18} /></button>
                                 </div>
                            </div>
                            <div className="mt-4 space-y-2 text-sm">
                                <div className="flex justify-between">
-                                   <span className="text-gray-500 dark:text-gray-400">Total Amount:</span>
+                                   <span className="text-gray-500 dark:text-gray-400">Total Value:</span>
                                    <span className="font-semibold">{settings.currency}{chit.totalAmount.toLocaleString('en-IN')}</span>
                                </div>
                                <div className="flex justify-between">
@@ -166,8 +185,8 @@ const ChitManager: React.FC = () => {
                                    <span className="font-semibold">{chit.durationMonths} Months</span>
                                </div>
                                 <div className="flex justify-between">
-                                   <span className="text-gray-500 dark:text-gray-400">Start Date:</span>
-                                   <span className="font-semibold">{new Date(chit.startDate).toLocaleDateString()}</span>
+                                   <span className="text-gray-500 dark:text-gray-400">Commission:</span>
+                                   <span className="font-semibold">{(chit.foremanCommissionRate * 100).toFixed(1)}%</span>
                                </div>
                            </div>
                         </Card>

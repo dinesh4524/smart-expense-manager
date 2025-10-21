@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import type { AppContextType, Expense, Category, HouseholdMember, Settings, PaymentMode, Debt, ChitFund } from '../types';
+import type { AppContextType, Expense, Category, HouseholdMember, Settings, PaymentMode, Debt, ChitFund, ChitFundAuction } from '../types';
 import { supabaseApi } from '../services/supabaseApi';
 import { useSession } from '../src/contexts/SessionContext';
 
@@ -12,6 +12,7 @@ interface AppState {
     paymentModes: PaymentMode[];
     debts: Debt[];
     chitFunds: ChitFund[];
+    chitFundAuctions: ChitFundAuction[]; // New state
     settings: Settings;
     isLoadingData: boolean;
 }
@@ -23,6 +24,7 @@ const initialAppState: AppState = {
     paymentModes: [],
     debts: [],
     chitFunds: [],
+    chitFundAuctions: [], // Initialize new state
     settings: { currency: '₹', theme: 'light' },
     isLoadingData: true,
 };
@@ -138,6 +140,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, 'Chit fund added');
     const updateChitFund = wrapUpdateDeleteApiCall(supabaseApi.updateChitFund, 'Chit fund updated');
     const deleteChitFund = wrapUpdateDeleteApiCall(supabaseApi.deleteChitFund, 'Chit fund deleted');
+    
+    const addChitFundAuction = wrapApiCall(async (auction: Omit<ChitFundAuction, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        return supabaseApi.addChitFundAuction(auction, userId);
+    }, 'Auction recorded');
+    const updateChitFundAuction = wrapUpdateDeleteApiCall(supabaseApi.updateChitFundAuction, 'Auction updated');
+    const deleteChitFundAuction = wrapUpdateDeleteApiCall(supabaseApi.deleteChitFundAuction, 'Auction deleted');
+
 
     // Settings Management
     const updateSettings = (newSettings: Partial<Settings>) => {
@@ -157,6 +167,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         paymentModes: state.paymentModes, 
         debts: state.debts, 
         chitFunds: state.chitFunds, 
+        chitFundAuctions: state.chitFundAuctions, // Include new state
         settings: state.settings,
         isLoadingData: state.isLoadingData,
         addExpense, 
@@ -177,6 +188,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addChitFund, 
         updateChitFund, 
         deleteChitFund,
+        addChitFundAuction, // Include new functions
+        updateChitFundAuction,
+        deleteChitFundAuction,
         updateSettings,
         getCategoryName, 
         getPersonName, 
@@ -192,6 +206,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addPaymentMode, updatePaymentMode, deletePaymentMode,
         addDebt, updateDebt, deleteDebt,
         addChitFund, updateChitFund, deleteChitFund,
+        addChitFundAuction, updateChitFundAuction, deleteChitFundAuction,
         updateSettings
     ]);
 
