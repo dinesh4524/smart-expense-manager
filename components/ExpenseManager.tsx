@@ -12,7 +12,7 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
     const [formData, setFormData] = useState({
         date: expense ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
         description: expense?.description || '',
-        amount: expense?.amount || 0,
+        amount: expense?.amount || '', // Changed to empty string to avoid NaN
         categoryId: expense?.categoryId || categories[0]?.id || '',
         personId: expense?.personId || people[0]?.id || '',
         paymentModeId: expense?.paymentModeId || paymentModes[0]?.id || '',
@@ -20,19 +20,22 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'amount' ? parseFloat(value) : value }));
+        // Keep amount as a string in the form state to handle empty input
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (formData.amount <= 0) {
-            alert("Amount must be greater than zero.");
+        const parsedAmount = parseFloat(String(formData.amount));
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            alert("Amount must be a valid number greater than zero.");
             return;
         }
         
         setIsSaving(true);
         const expenseData = {
             ...formData,
+            amount: parsedAmount, // Use the parsed numeric amount
             date: new Date(formData.date).toISOString(),
         };
         
@@ -40,7 +43,7 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
             if (expense) {
                 await onSave({ ...expense, ...expenseData });
             } else {
-                await onSave(expenseData);
+                await onSave(expenseData as Omit<Expense, 'id'>);
             }
             onCancel();
         } catch (error) {
@@ -62,7 +65,7 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
             </div>
             <div>
                 <label className="block text-sm font-medium">Amount</label>
-                <input type="number" name="amount" value={formData.amount} onChange={handleChange} required min="0.01" step="0.01" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
+                <input type="number" name="amount" value={formData.amount} onChange={handleChange} required min="0.01" step="0.01" placeholder="0.00" className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"/>
             </div>
             <div>
                 <label className="block text-sm font-medium">Category</label>
