@@ -6,7 +6,7 @@ import Button from './ui/Button';
 import { Download } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const Reports: React.FC = () => {
     const { expenses, categories, people, settings, getCategoryName, getPersonName, getPaymentModeName } = useAppContext();
@@ -68,7 +68,7 @@ const Reports: React.FC = () => {
     const handleExportPDF = () => {
         const doc = new jsPDF();
         doc.text("Expense Report", 14, 16);
-        (doc as any).autoTable({
+        autoTable(doc, {
             head: [['Date', 'Description', 'Category', 'Person', 'Payment Mode', 'Amount']],
             body: expenses.map(e => [
                 new Date(e.date).toLocaleDateString(),
