@@ -55,47 +55,65 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     }, [session, fetchData]);
 
-    // Helper function to wrap API calls and refresh data
-    const wrapApiCall = useCallback((apiCall: () => Promise<void>) => async () => {
-        try {
-            await apiCall();
-            await fetchData();
-        } catch (e) {
-            const error = e as Error;
-            console.error("API call failed:", error.message);
-            alert(`Operation failed: ${error.message}`);
-        }
-    }, [fetchData]);
+    // Helper function to wrap API calls, handle errors, and refresh data
+    const wrapApiCall = useCallback(
+        <TArgs extends any[]>(apiCall: (...args: TArgs) => Promise<any>) => {
+            return async (...args: TArgs) => {
+                try {
+                    await apiCall(...args);
+                    await fetchData(); // Refresh data on success
+                } catch (e) {
+                    const error = e as Error;
+                    console.error("API call failed:", error.message);
+                    alert(`Operation failed: ${error.message}`);
+                }
+            };
+        },
+        [fetchData]
+    );
 
-    // Expense Management
-    const addExpense = wrapApiCall(() => supabaseApi.addExpense(state.expenses[0], userId!)); // Placeholder, actual implementation below
-    const updateExpense = wrapApiCall(() => supabaseApi.updateExpense(state.expenses[0])); // Placeholder, actual implementation below
-    const deleteExpense = wrapApiCall(() => supabaseApi.deleteExpense('')); // Placeholder, actual implementation below
+    // CRUD operations
+    const addExpense = wrapApiCall(async (expense: Omit<Expense, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addExpense(expense, userId);
+    });
+    const updateExpense = wrapApiCall(supabaseApi.updateExpense);
+    const deleteExpense = wrapApiCall(supabaseApi.deleteExpense);
 
-    // Re-implementing CRUD functions using the wrapper and correct arguments
-    const addExpenseReal = wrapApiCall((expense: Omit<Expense, 'id'>) => supabaseApi.addExpense(expense, userId!));
-    const updateExpenseReal = wrapApiCall((expense: Expense) => supabaseApi.updateExpense(expense));
-    const deleteExpenseReal = wrapApiCall((id: string) => supabaseApi.deleteExpense(id));
+    const addCategory = wrapApiCall(async (category: Omit<Category, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addCategory(category, userId);
+    });
+    const updateCategory = wrapApiCall(supabaseApi.updateCategory);
+    const deleteCategory = wrapApiCall(supabaseApi.deleteCategory);
 
-    const addCategoryReal = wrapApiCall((category: Omit<Category, 'id'>) => supabaseApi.addCategory(category, userId!));
-    const updateCategoryReal = wrapApiCall((category: Category) => supabaseApi.updateCategory(category));
-    const deleteCategoryReal = wrapApiCall((id: string) => supabaseApi.deleteCategory(id));
+    const addPerson = wrapApiCall(async (person: Omit<HouseholdMember, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addPerson(person, userId);
+    });
+    const updatePerson = wrapApiCall(supabaseApi.updatePerson);
+    const deletePerson = wrapApiCall(supabaseApi.deletePerson);
 
-    const addPersonReal = wrapApiCall((person: Omit<HouseholdMember, 'id'>) => supabaseApi.addPerson(person, userId!));
-    const updatePersonReal = wrapApiCall((person: HouseholdMember) => supabaseApi.updatePerson(person));
-    const deletePersonReal = wrapApiCall((id: string) => supabaseApi.deletePerson(id));
+    const addPaymentMode = wrapApiCall(async (mode: Omit<PaymentMode, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addPaymentMode(mode, userId);
+    });
+    const updatePaymentMode = wrapApiCall(supabaseApi.updatePaymentMode);
+    const deletePaymentMode = wrapApiCall(supabaseApi.deletePaymentMode);
 
-    const addPaymentModeReal = wrapApiCall((mode: Omit<PaymentMode, 'id'>) => supabaseApi.addPaymentMode(mode, userId!));
-    const updatePaymentModeReal = wrapApiCall((mode: PaymentMode) => supabaseApi.updatePaymentMode(mode));
-    const deletePaymentModeReal = wrapApiCall((id: string) => supabaseApi.deletePaymentMode(id));
+    const addDebt = wrapApiCall(async (debt: Omit<Debt, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addDebt(debt, userId);
+    });
+    const updateDebt = wrapApiCall(supabaseApi.updateDebt);
+    const deleteDebt = wrapApiCall(supabaseApi.deleteDebt);
 
-    const addDebtReal = wrapApiCall((debt: Omit<Debt, 'id'>) => supabaseApi.addDebt(debt, userId!));
-    const updateDebtReal = wrapApiCall((debt: Debt) => supabaseApi.updateDebt(debt));
-    const deleteDebtReal = wrapApiCall((id: string) => supabaseApi.deleteDebt(id));
-
-    const addChitFundReal = wrapApiCall((chit: Omit<ChitFund, 'id'>) => supabaseApi.addChitFund(chit, userId!));
-    const updateChitFundReal = wrapApiCall((chit: ChitFund) => supabaseApi.updateChitFund(chit));
-    const deleteChitFundReal = wrapApiCall((id: string) => supabaseApi.deleteChitFund(id));
+    const addChitFund = wrapApiCall(async (chit: Omit<ChitFund, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        await supabaseApi.addChitFund(chit, userId);
+    });
+    const updateChitFund = wrapApiCall(supabaseApi.updateChitFund);
+    const deleteChitFund = wrapApiCall(supabaseApi.deleteChitFund);
 
     // Settings Management
     const updateSettings = (newSettings: Partial<Settings>) => {
@@ -104,20 +122,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
     // Getters
-    const getCategoryName = useCallback((id: string) => {
-        return state.categories.find(c => c.id === id)?.name || 'Unknown';
-    }, [state.categories]);
+    const getCategoryName = useCallback((id: string) => state.categories.find(c => c.id === id)?.name || 'Unknown', [state.categories]);
+    const getPersonName = useCallback((id: string) => state.people.find(p => p.id === id)?.name || 'Unknown', [state.people]);
+    const getPaymentModeName = useCallback((id: string) => state.paymentModes.find(p => p.id === id)?.name || 'Unknown', [state.paymentModes]);
 
-    const getPersonName = useCallback((id: string) => {
-        return state.people.find(p => p.id === id)?.name || 'Unknown';
-    }, [state.people]);
-
-    const getPaymentModeName = useCallback((id: string) => {
-        return state.paymentModes.find(p => p.id === id)?.name || 'Unknown';
-    }, [state.paymentModes]);
-
-
-    const value = useMemo(() => ({
+    const value: AppContextType = useMemo(() => ({
         expenses: state.expenses, 
         categories: state.categories, 
         people: state.people, 
@@ -126,50 +135,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         chitFunds: state.chitFunds, 
         settings: state.settings,
         isLoadingData: state.isLoadingData,
-        // CRUD functions
-        addExpense: addExpenseReal, 
-        updateExpense: updateExpenseReal, 
-        deleteExpense: deleteExpenseReal,
-        addCategory: addCategoryReal, 
-        updateCategory: updateCategoryReal, 
-        deleteCategory: deleteCategoryReal,
-        addPerson: addPersonReal, 
-        updatePerson: updatePersonReal, 
-        deletePerson: deletePersonReal,
-        addPaymentMode: addPaymentModeReal, 
-        updatePaymentMode: updatePaymentModeReal, 
-        deletePaymentMode: deletePaymentModeReal,
-        addDebt: addDebtReal, 
-        updateDebt: updateDebtReal, 
-        deleteDebt: deleteDebtReal,
-        addChitFund: addChitFundReal, 
-        updateChitFund: updateChitFundReal, 
-        deleteChitFund: deleteChitFundReal,
-        // Settings
+        addExpense, 
+        updateExpense, 
+        deleteExpense,
+        addCategory, 
+        updateCategory, 
+        deleteCategory,
+        addPerson, 
+        updatePerson, 
+        deletePerson,
+        addPaymentMode, 
+        updatePaymentMode, 
+        deletePaymentMode,
+        addDebt, 
+        updateDebt, 
+        deleteDebt,
+        addChitFund, 
+        updateChitFund, 
+        deleteChitFund,
         updateSettings,
-        // Getters
         getCategoryName, 
         getPersonName, 
         getPaymentModeName,
-        // Dummy user functions removed as they are handled by Supabase Auth
-        addUser: () => { throw new Error("User management is handled by Supabase Auth."); },
-        updateUser: () => { throw new Error("User management is handled by Supabase Auth."); },
-        deleteUser: () => { throw new Error("User management is handled by Supabase Auth."); },
-        users: [], // Removed local user state
     }), [
         state, 
         getCategoryName, 
         getPersonName, 
         getPaymentModeName,
-        addExpenseReal, updateExpenseReal, deleteExpenseReal,
-        addCategoryReal, updateCategoryReal, deleteCategoryReal,
-        addPersonReal, updatePersonReal, deletePersonReal,
-        addPaymentModeReal, updatePaymentModeReal, deletePaymentModeReal,
-        addDebtReal, updateDebtReal, deleteDebtReal,
-        addChitFundReal, updateChitFundReal, deleteChitFundReal,
+        addExpense, updateExpense, deleteExpense,
+        addCategory, updateCategory, deleteCategory,
+        addPerson, updatePerson, deletePerson,
+        addPaymentMode, updatePaymentMode, deletePaymentMode,
+        addDebt, updateDebt, deleteDebt,
+        addChitFund, updateChitFund, deleteChitFund,
+        updateSettings
     ]);
 
-    return <AppContext.Provider value={value as unknown as AppContextType}>{children}</AppContext.Provider>;
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
 export const useAppContext = (): AppContextType => {
