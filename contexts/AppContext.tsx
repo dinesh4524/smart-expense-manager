@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import type { AppContextType, Expense, Category, HouseholdMember, Settings, PaymentMode, Debt, ChitFund } from '../types';
 import { supabaseApi } from '../services/supabaseApi';
 import { useSession } from '../src/contexts/SessionContext';
@@ -45,6 +46,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
+            toast.error("Failed to load your data. Please try refreshing.");
             setState(prev => ({ ...prev, isLoadingData: false }));
         }
     }, [userId]);
@@ -57,15 +59,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Helper function to wrap API calls, handle errors, and refresh data
     const wrapApiCall = useCallback(
-        <TArgs extends any[]>(apiCall: (...args: TArgs) => Promise<any>) => {
+        <TArgs extends any[]>(apiCall: (...args: TArgs) => Promise<any>, successMessage?: string) => {
             return async (...args: TArgs) => {
+                const toastId = toast.loading('Saving...');
                 try {
                     await apiCall(...args);
                     await fetchData(); // Refresh data on success
+                    toast.success(successMessage || 'Operation successful!', { id: toastId });
                 } catch (e) {
                     const error = e as Error;
                     console.error("API call failed:", error.message);
-                    alert(`Operation failed: ${error.message}`);
+                    toast.error(`Operation failed: ${error.message}`, { id: toastId });
                 }
             };
         },
@@ -76,44 +80,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const addExpense = wrapApiCall(async (expense: Omit<Expense, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addExpense(expense, userId);
-    });
-    const updateExpense = wrapApiCall(supabaseApi.updateExpense);
-    const deleteExpense = wrapApiCall(supabaseApi.deleteExpense);
+    }, 'Expense added');
+    const updateExpense = wrapApiCall(supabaseApi.updateExpense, 'Expense updated');
+    const deleteExpense = wrapApiCall(supabaseApi.deleteExpense, 'Expense deleted');
 
     const addCategory = wrapApiCall(async (category: Omit<Category, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addCategory(category, userId);
-    });
-    const updateCategory = wrapApiCall(supabaseApi.updateCategory);
-    const deleteCategory = wrapApiCall(supabaseApi.deleteCategory);
+    }, 'Category added');
+    const updateCategory = wrapApiCall(supabaseApi.updateCategory, 'Category updated');
+    const deleteCategory = wrapApiCall(supabaseApi.deleteCategory, 'Category deleted');
 
     const addPerson = wrapApiCall(async (person: Omit<HouseholdMember, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addPerson(person, userId);
-    });
-    const updatePerson = wrapApiCall(supabaseApi.updatePerson);
-    const deletePerson = wrapApiCall(supabaseApi.deletePerson);
+    }, 'Person added');
+    const updatePerson = wrapApiCall(supabaseApi.updatePerson, 'Person updated');
+    const deletePerson = wrapApiCall(supabaseApi.deletePerson, 'Person deleted');
 
     const addPaymentMode = wrapApiCall(async (mode: Omit<PaymentMode, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addPaymentMode(mode, userId);
-    });
-    const updatePaymentMode = wrapApiCall(supabaseApi.updatePaymentMode);
-    const deletePaymentMode = wrapApiCall(supabaseApi.deletePaymentMode);
+    }, 'Payment mode added');
+    const updatePaymentMode = wrapApiCall(supabaseApi.updatePaymentMode, 'Payment mode updated');
+    const deletePaymentMode = wrapApiCall(supabaseApi.deletePaymentMode, 'Payment mode deleted');
 
     const addDebt = wrapApiCall(async (debt: Omit<Debt, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addDebt(debt, userId);
-    });
-    const updateDebt = wrapApiCall(supabaseApi.updateDebt);
-    const deleteDebt = wrapApiCall(supabaseApi.deleteDebt);
+    }, 'Debt record added');
+    const updateDebt = wrapApiCall(supabaseApi.updateDebt, 'Debt record updated');
+    const deleteDebt = wrapApiCall(supabaseApi.deleteDebt, 'Debt record deleted');
 
     const addChitFund = wrapApiCall(async (chit: Omit<ChitFund, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
         await supabaseApi.addChitFund(chit, userId);
-    });
-    const updateChitFund = wrapApiCall(supabaseApi.updateChitFund);
-    const deleteChitFund = wrapApiCall(supabaseApi.deleteChitFund);
+    }, 'Chit fund added');
+    const updateChitFund = wrapApiCall(supabaseApi.updateChitFund, 'Chit fund updated');
+    const deleteChitFund = wrapApiCall(supabaseApi.deleteChitFund, 'Chit fund deleted');
 
     // Settings Management
     const updateSettings = (newSettings: Partial<Settings>) => {
