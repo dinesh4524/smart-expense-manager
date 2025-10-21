@@ -3,6 +3,7 @@ import { supabase } from '@/src/integrations/supabase/client';
 import Card from './ui/Card';
 import { User as AuthUser } from '@supabase/supabase-js';
 import toast from 'react-hot-toast';
+import { useSession } from '@/src/contexts/SessionContext';
 
 type AppUser = AuthUser & {
     user_metadata: {
@@ -13,15 +14,24 @@ type AppUser = AuthUser & {
 const AdminDashboard: React.FC = () => {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { session } = useSession();
 
     useEffect(() => {
         const fetchUsers = async () => {
+            if (!session) {
+                setIsLoading(false);
+                return;
+            }
+
             setIsLoading(true);
             try {
                 const { data, error } = await supabase.functions.invoke('get-all-users');
                 
                 if (error) {
-                    throw new Error(error.message);
+                    // Don't show a toast for auth-related errors that can happen during logout
+                    if (!error.message.toLowerCase().includes('function returned a non-2xx status code')) {
+                        throw new Error(error.message);
+                    }
                 }
 
                 if (data && data.users) {
@@ -39,7 +49,7 @@ const AdminDashboard: React.FC = () => {
         };
 
         fetchUsers();
-    }, []);
+    }, [session]);
 
     return (
         <Card>
