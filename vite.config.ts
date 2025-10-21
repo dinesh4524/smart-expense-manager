@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      // Explicitly mark React and ReactDOM as external to rely on importmap
+      build: {
+        rollupOptions: {
+          external: ['react', 'react-dom', 'react/jsx-runtime'],
+        },
+      },
     };
 });
