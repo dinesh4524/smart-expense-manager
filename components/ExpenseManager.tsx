@@ -7,10 +7,15 @@ import { Edit, Trash, PlusCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense, 'id'> | Expense) => Promise<void>; onCancel: () => void; }> = ({ expense, onSave, onCancel }) => {
-    const { categories, people, paymentModes, addPerson } = useAppContext();
+    const { categories, people, paymentModes, addPerson, addCategory, addPaymentMode } = useAppContext();
     const [isSaving, setIsSaving] = useState(false);
+    
     const [showNewPersonInput, setShowNewPersonInput] = useState(false);
     const [newPersonName, setNewPersonName] = useState('');
+    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [showNewPaymentModeInput, setShowNewPaymentModeInput] = useState(false);
+    const [newPaymentModeName, setNewPaymentModeName] = useState('');
     
     const [formData, setFormData] = useState({
         date: expense ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -25,10 +30,14 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
         const { name, value } = e.target;
         if (name === 'personId' && value === '__add_new__') {
             setShowNewPersonInput(true);
+        } else if (name === 'categoryId' && value === '__add_new__') {
+            setShowNewCategoryInput(true);
+        } else if (name === 'paymentModeId' && value === '__add_new__') {
+            setShowNewPaymentModeInput(true);
         } else {
-            if (name === 'personId') {
-                setShowNewPersonInput(false);
-            }
+            if (name === 'personId') setShowNewPersonInput(false);
+            if (name === 'categoryId') setShowNewCategoryInput(false);
+            if (name === 'paymentModeId') setShowNewPaymentModeInput(false);
             setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
@@ -43,27 +52,55 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
         
         setIsSaving(true);
         let finalPersonId = formData.personId;
+        let finalCategoryId = formData.categoryId;
+        let finalPaymentModeId = formData.paymentModeId;
 
         if (showNewPersonInput && newPersonName.trim() !== '') {
             const newPerson = await addPerson({ name: newPersonName.trim() });
             if (newPerson) {
                 finalPersonId = newPerson.id;
             } else {
-                setIsSaving(false);
-                return; // Error toast is shown by addPerson
+                setIsSaving(false); return;
+            }
+        }
+        
+        if (showNewCategoryInput && newCategoryName.trim() !== '') {
+            const newCategory = await addCategory({ name: newCategoryName.trim() });
+            if (newCategory) {
+                finalCategoryId = newCategory.id;
+            } else {
+                setIsSaving(false); return;
+            }
+        }
+
+        if (showNewPaymentModeInput && newPaymentModeName.trim() !== '') {
+            const newPaymentMode = await addPaymentMode({ name: newPaymentModeName.trim(), icon: '' });
+            if (newPaymentMode) {
+                finalPaymentModeId = newPaymentMode.id;
+            } else {
+                setIsSaving(false); return;
             }
         }
 
         if (!finalPersonId || finalPersonId === '__add_new__') {
             toast.error("Please select or add a person.");
-            setIsSaving(false);
-            return;
+            setIsSaving(false); return;
+        }
+        if (!finalCategoryId || finalCategoryId === '__add_new__') {
+            toast.error("Please select or add a category.");
+            setIsSaving(false); return;
+        }
+        if (!finalPaymentModeId || finalPaymentModeId === '__add_new__') {
+            toast.error("Please select or add a payment mode.");
+            setIsSaving(false); return;
         }
 
         const expenseData = {
             ...formData,
             amount: parsedAmount,
             personId: finalPersonId,
+            categoryId: finalCategoryId,
+            paymentModeId: finalPaymentModeId,
             date: new Date(formData.date).toISOString(),
         };
         
@@ -97,9 +134,27 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
             </div>
             <div>
                 <label className="block text-sm font-medium">Category</label>
-                <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                {showNewCategoryInput ? (
+                    <div className="flex items-center gap-2 mt-1">
+                        <input 
+                            type="text" 
+                            placeholder="New Category Name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                            autoFocus
+                        />
+                        <Button type="button" variant="secondary" size="sm" onClick={() => {
+                            setShowNewCategoryInput(false);
+                            setFormData(prev => ({ ...prev, categoryId: categories[0]?.id || '' }));
+                        }}>Cancel</Button>
+                    </div>
+                ) : (
+                    <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        <option value="__add_new__">-- Add New Category --</option>
+                    </select>
+                )}
             </div>
             <div>
                 <label className="block text-sm font-medium">Person</label>
@@ -127,9 +182,27 @@ const ExpenseForm: React.FC<{ expense?: Expense; onSave: (expense: Omit<Expense,
             </div>
             <div>
                 <label className="block text-sm font-medium">Payment Mode</label>
-                <select name="paymentModeId" value={formData.paymentModeId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                    {paymentModes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                {showNewPaymentModeInput ? (
+                     <div className="flex items-center gap-2 mt-1">
+                        <input 
+                            type="text" 
+                            placeholder="New Payment Mode Name"
+                            value={newPaymentModeName}
+                            onChange={(e) => setNewPaymentModeName(e.target.value)}
+                            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                            autoFocus
+                        />
+                        <Button type="button" variant="secondary" size="sm" onClick={() => {
+                            setShowNewPaymentModeInput(false);
+                            setFormData(prev => ({ ...prev, paymentModeId: paymentModes[0]?.id || '' }));
+                        }}>Cancel</Button>
+                    </div>
+                ) : (
+                    <select name="paymentModeId" value={formData.paymentModeId} onChange={handleChange} required className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        {paymentModes.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        <option value="__add_new__">-- Add New Payment Mode --</option>
+                    </select>
+                )}
             </div>
             <div className="flex justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>Cancel</Button>
