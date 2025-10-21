@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // This function can only be called by authenticated users who have the 'admin' role.
-// It uses the SERVICE_ROLE_KEY to bypass RLS and fetch all users from the auth schema.
+// It uses the SERVICE_ROLE_KEY to bypass RLS and fetch all users and their profiles.
 
 serve(async (req) => {
   // Handle CORS preflight request
@@ -16,7 +16,7 @@ serve(async (req) => {
   }
 
   try {
-    // Create a Supabase client with the user's auth token
+    // Create a Supabase client with the user's auth token to verify they are an admin
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -43,10 +43,26 @@ serve(async (req) => {
     );
 
     // Fetch all users from the auth.users table
-    const { data: users, error: adminError } = await serviceClient.auth.admin.listUsers();
+    const { data: { users }, error: adminError } = await serviceClient.auth.admin.listUsers();
     if (adminError) throw adminError;
 
-    return new Response(JSON.stringify(users), {
+    // Fetch all profiles from public.profiles
+    const { data: profiles, error: profilesError } = await serviceClient
+      .from('profiles')
+      .select('id, first_name, last_name');
+    if (profilesError) throw profilesError;
+
+    // Create a map of profiles for easy lookup
+    const profilesMap = new Map(profiles.map(p => [p.id, p]));
+
+    // Combine user data with profile data
+    const combinedUsers = users.map(u => ({
+      ...u,
+      first_name: profilesMap.get(u.id)?.first_name || null,
+      last_name: profilesMap.get(u.id)?.last_name || null,
+    }));
+
+    return new Response(JSON.stringify({ users: combinedUsers }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
