@@ -38,20 +38,32 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
       {/* Main Content */}
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="text-center py-20 px-4">
-          <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-800 dark:text-gray-100">
-            Manage Your Home Expenses, The Smart Way.
-          </h2>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto text-gray-600 dark:text-gray-400 mb-8">
-            ExpenseMgr helps you track spending, visualize reports, and take control of your family's finances with ease.
-          </p>
-          <Button onClick={onNavigateToRegister} size="lg">
-            Get Started Now
-          </Button>
+        <section className="py-20 px-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="text-center lg:text-left">
+              <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-800 dark:text-gray-100">
+                Manage Your Home Expenses, The Smart Way.
+              </h2>
+              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8">
+                ExpenseMgr helps you track spending, visualize reports, and take control of your family's finances with ease.
+              </p>
+              <Button onClick={onNavigateToRegister} size="lg">
+                Get Started Now
+              </Button>
+            </div>
+            <div className="hidden lg:block">
+              {/* Placeholder Image for Hero */}
+              <img 
+                src="https://images.unsplash.com/photo-1553729459-efe14ef6aa4e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                alt="Expense Manager Dashboard Preview" 
+                className="rounded-xl shadow-2xl w-full h-auto object-cover"
+              />
+            </div>
+          </div>
         </section>
 
         {/* Features Section */}
-        <section className="py-20 bg-gray-100 dark:bg-gray-800 px-4">
+        <section className="py-20 bg-gray-100 dark:bg-gray-900 px-4">
           <div className="max-w-6xl mx-auto">
             <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-gray-200">Why Choose ExpenseMgr?</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -77,6 +89,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
               />
             </div>
           </div>
+        </section>
+        
+        {/* Call to Action Section */}
+        <section className="py-16 bg-primary-600 dark:bg-primary-700 text-white text-center">
+            <h3 className="text-3xl font-bold mb-4">Ready to take control of your finances?</h3>
+            <p className="text-lg mb-8 opacity-90">Join thousands of smart homeowners managing their budget effortlessly.</p>
+            <Button onClick={onNavigateToRegister} size="lg" variant="secondary" className="bg-white text-primary-600 hover:bg-gray-100">
+                Start Your Free Trial
+            </Button>
         </section>
       </main>
 
