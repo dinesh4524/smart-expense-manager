@@ -45,15 +45,56 @@ export const supabaseApi = {
             fetchTable<Category>('categories'),
             fetchTable<HouseholdMember>('household_members'),
             fetchTable<PaymentMode>('payment_modes'),
-            fetchTable<Expense>('expenses'),
-            fetchTable<Debt>('debts'),
-            fetchTable<ChitFund>('chit_funds'),
+            fetchTable<any>('expenses'), // Fetch as 'any' to handle snake_case
+            fetchTable<any>('debts'),
+            fetchTable<any>('chit_funds'),
         ]);
         
+        // Manually map snake_case to camelCase for frontend types
+        const mappedExpenses: Expense[] = expenses.map((e: any) => ({
+            id: e.id,
+            date: e.date,
+            description: e.description,
+            amount: e.amount,
+            categoryId: e.category_id,
+            personId: e.household_member_id,
+            paymentModeId: e.payment_mode_id,
+            receiptUrl: e.receipt_url,
+        }));
+
+        const mappedDebts: Debt[] = debts.map((d: any) => ({
+            id: d.id,
+            personId: d.person_id,
+            amount: d.amount,
+            type: d.type,
+            description: d.description,
+            issueDate: d.issue_date,
+            dueDate: d.due_date,
+            status: d.status,
+        }));
+
+        const mappedChitFunds: ChitFund[] = chitFunds.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            totalAmount: c.total_amount,
+            monthlyInstallment: c.monthly_installment,
+            durationMonths: c.duration_months,
+            startDate: c.start_date,
+            status: c.status,
+        }));
+
         // Settings are still stored locally for simplicity (currency/theme)
         const settings: Settings = JSON.parse(localStorage.getItem('settings') || '{"currency": "₹", "theme": "light"}');
 
-        return { categories, people, paymentModes, expenses, debts, chitFunds, settings };
+        return { 
+            categories, 
+            people, 
+            paymentModes, 
+            expenses: mappedExpenses, 
+            debts: mappedDebts, 
+            chitFunds: mappedChitFunds, 
+            settings 
+        };
     },
 
     // --- Categories ---
