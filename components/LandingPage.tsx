@@ -70,7 +70,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
       </section>
 
       {/* Features Section - More Colorful Cards */}
-      <section className="py-20 bg-gray-100 dark:bg-gray-900 px-4">
+      <section className="py-20 bg-white dark:bg-gray-800 px-4 border-b dark:border-gray-700">
         <div className="max-w-6xl mx-auto">
           <h3 className="text-4xl font-bold text-center mb-12 text-gray-800 dark:text-gray-200">Powerful Features, Simple Interface</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -127,17 +127,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
         </div>
       </section>
       
-      {/* CTA Section - High Contrast */}
-      <section className="py-16 px-4 bg-primary-600 dark:bg-primary-700 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Master Your Money?</h3>
-            <p className="text-xl mb-8 opacity-90">Join thousands of smart households taking control of their financial future today.</p>
-            <Button onClick={onNavigateToRegister} size="lg" variant="secondary" className="bg-white text-primary-600 hover:bg-gray-100 shadow-xl">
-                Sign Up in 30 Seconds
-            </Button>
-        </div>
-      </section>
-
       {/* Footer */}
       <Footer />
     </div>
