@@ -1,19 +1,19 @@
 import React from 'react';
 import Button from './ui/Button';
 import Footer from './Footer';
-import { TrendingUp, PieChart, Users, ShieldCheck, LogIn } from 'lucide-react';
+import { TrendingUp, PieChart, Users, ShieldCheck, LogIn, Zap } from 'lucide-react';
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;
   onNavigateToRegister: () => void;
 }
 
-const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center flex flex-col items-center">
-    <div className="flex-shrink-0 inline-block p-4 bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-300 rounded-full mb-4">
+const FeatureCard = ({ icon, title, description, color }: { icon: React.ReactNode, title: string, description: string, color: string }) => (
+  <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-xl text-center flex flex-col items-center transform transition duration-300 hover:scale-[1.02] hover:shadow-2xl border border-gray-100 dark:border-gray-700">
+    <div className={`flex-shrink-0 inline-block p-4 ${color} text-white rounded-full mb-4 shadow-lg`}>
       {icon}
     </div>
-    <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">{title}</h3>
+    <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-200">{title}</h3>
     <p className="text-gray-600 dark:text-gray-400">{description}</p>
   </div>
 );
@@ -22,8 +22,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="p-4 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-        <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">ExpenseMgr</h1>
+      <header className="p-4 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+        <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-400">ExpenseMgr</h1>
         <div className="flex items-center gap-2">
             <Button onClick={onNavigateToLogin} size="sm" variant="secondary">
                 <LogIn size={16} className="mr-1" />
@@ -35,62 +35,83 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="py-20 px-4 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="text-center lg:text-left">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-4 text-gray-800 dark:text-gray-100">
-                Manage Your Home Expenses, The Smart Way.
-              </h2>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8">
-                ExpenseMgr helps you track spending, visualize reports, and take control of your family's finances with ease.
-              </p>
-              <Button onClick={onNavigateToRegister} size="lg">
-                Get Started Now
-              </Button>
-            </div>
-            <div className="hidden lg:block">
-              {/* Placeholder Image for Hero */}
-              <img 
-                src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1911&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
-                alt="Expense Manager Dashboard Preview" 
-                className="rounded-xl shadow-2xl w-full h-auto object-cover"
-              />
+      {/* Hero Section - Vibrant and Dynamic */}
+      <section className="py-24 px-4 bg-gradient-to-br from-primary-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 border-b dark:border-gray-700 relative overflow-hidden">
+        {/* Subtle background animation effect (simulated 3D/dynamic feel) */}
+        <div className="absolute inset-0 opacity-10 dark:opacity-5">
+            <div className="w-96 h-96 bg-primary-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob absolute top-0 left-0"></div>
+            <div className="w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000 absolute bottom-0 right-0"></div>
+        </div>
+        
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+          <div className="text-center lg:text-left">
+            <h2 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight text-gray-900 dark:text-gray-50">
+              Take <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-500">Control</span> of Your Finances.
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 mb-10">
+              ExpenseMgr provides secure, insightful, and easy-to-use tools for managing every aspect of your household spending.
+            </p>
+            <Button onClick={onNavigateToRegister} size="lg" className="shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition duration-200">
+              <Zap size={24} className="mr-2" />
+              Start Tracking for Free
+            </Button>
+          </div>
+          <div className="hidden lg:block">
+            {/* Placeholder Image for Hero - Updated to look more like a modern app screenshot */}
+            <div className="bg-white dark:bg-gray-700 p-4 rounded-2xl shadow-2xl border-4 border-primary-500/50 transform rotate-3 hover:rotate-0 transition duration-500">
+                <img 
+                    src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1911&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                    alt="Expense Manager Dashboard Preview" 
+                    className="rounded-xl w-full h-auto object-cover"
+                />
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Features Section */}
-        <section className="py-20 bg-gray-100 dark:bg-gray-900 px-4">
-          <div className="max-w-6xl mx-auto">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-gray-200">Why Choose ExpenseMgr?</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <FeatureCard 
-                icon={<TrendingUp size={32} />} 
-                title="Track Everything" 
-                description="Easily add, edit, and manage all your expenses in one place. Never lose track of a single penny."
-              />
-              <FeatureCard 
-                icon={<PieChart size={32} />} 
-                title="Visualize Insights" 
-                description="Interactive charts and reports help you understand where your money is going."
-              />
-              <FeatureCard 
-                icon={<Users size={32} />} 
-                title="Family Focused" 
-                description="Manage expenses by person to see who is spending what, perfect for families and shared households."
-              />
-              <FeatureCard 
-                icon={<ShieldCheck size={32} />} 
-                title="Secure & Private" 
-                description="Your financial data is yours alone. We prioritize your privacy and data security."
-              />
-            </div>
+      {/* Features Section - More Colorful Cards */}
+      <section className="py-20 bg-gray-100 dark:bg-gray-900 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h3 className="text-4xl font-bold text-center mb-12 text-gray-800 dark:text-gray-200">Powerful Features, Simple Interface</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <FeatureCard 
+              icon={<TrendingUp size={32} />} 
+              title="Real-time Tracking" 
+              description="Log, categorize, and analyze all your expenses instantly across multiple devices."
+              color="bg-green-500"
+            />
+            <FeatureCard 
+              icon={<PieChart size={32} />} 
+              title="Visual Reports" 
+              description="Interactive charts show you exactly where your money is going, helping you budget better."
+              color="bg-yellow-500"
+            />
+            <FeatureCard 
+              icon={<Users size={32} />} 
+              title="Household Sharing" 
+              description="Track spending by family member, making shared finances transparent and easy to manage."
+              color="bg-blue-500"
+            />
+            <FeatureCard 
+              icon={<ShieldCheck size={32} />} 
+              title="Secure & Private" 
+              description="Built on Supabase with mandatory Row Level Security to keep your data safe."
+              color="bg-red-500"
+            />
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
+      
+      {/* CTA Section - High Contrast */}
+      <section className="py-16 px-4 bg-primary-600 dark:bg-primary-700 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+            <h3 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Master Your Money?</h3>
+            <p className="text-xl mb-8 opacity-90">Join thousands of smart households taking control of their financial future today.</p>
+            <Button onClick={onNavigateToRegister} size="lg" variant="secondary" className="bg-white text-primary-600 hover:bg-gray-100 shadow-xl">
+                Sign Up in 30 Seconds
+            </Button>
+        </div>
+      </section>
 
       {/* Footer */}
       <Footer />
