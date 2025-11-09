@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from './ui/Button';
 import Footer from './Footer';
-import { TrendingUp, PieChart, Users, ShieldCheck, LogIn, Zap } from 'lucide-react';
+import { TrendingUp, PieChart, Users, ShieldCheck, LogIn, Zap, DollarSign, HandCoins, LayoutGrid } from 'lucide-react';
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;
@@ -97,6 +97,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigateToLogin, onNavigate
               title="Secure & Private" 
               description="Built on Supabase with mandatory Row Level Security to keep your data safe."
               color="bg-red-500"
+            />
+            {/* Adding more colorful feature cards for variety */}
+            <FeatureCard 
+              icon={<DollarSign size={32} />} 
+              title="Income Management" 
+              description="Track all sources of income to get a complete picture of your cash flow."
+              color="bg-purple-600"
+            />
+            <FeatureCard 
+              icon={<HandCoins size={32} />} 
+              title="Debt & Loans" 
+              description="Keep a clear record of money borrowed and loaned, including due dates."
+              color="bg-pink-500"
+            />
+            <FeatureCard 
+              icon={<LayoutGrid size={32} />} 
+              title="Custom Categories" 
+              description="Define and manage custom categories and payment modes to fit your lifestyle."
+              color="bg-indigo-600"
+            />
+            <FeatureCard 
+              icon={<Zap size={32} />} 
+              title="Fast Performance" 
+              description="Built with modern tools like React and Vite for a lightning-fast user experience."
+              color="bg-orange-500"
             />
           </div>
         </div>
