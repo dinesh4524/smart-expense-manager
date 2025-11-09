@@ -12,6 +12,14 @@ export interface Expense {
   receiptUrl?: string; // Optional URL for uploaded receipt
 }
 
+export interface Income {
+  id: string;
+  date: string; // ISO string format
+  description: string;
+  amount: number;
+  source: string; // e.g., Salary, Bonus, Gift
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -79,6 +87,7 @@ export interface Profile {
 
 export interface AppContextType {
   expenses: Expense[];
+  incomes: Income[]; // New state for incomes
   categories: Category[];
   people: HouseholdMember[]; // Renamed to HouseholdMember in type, but keeping 'people' key for context compatibility
   paymentModes: PaymentMode[];
@@ -91,6 +100,10 @@ export interface AppContextType {
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<Expense | undefined>;
   updateExpense: (expense: Expense) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
+  // Incomes
+  addIncome: (income: Omit<Income, 'id'>) => Promise<Income | undefined>;
+  updateIncome: (income: Income) => Promise<void>;
+  deleteIncome: (id: string) => Promise<void>;
   // Categories
   addCategory: (category: Omit<Category, 'id'>) => Promise<Category | undefined>;
   updateCategory: (category: Category) => Promise<void>;

@@ -1,30 +1,32 @@
 import React, { createContext, useState, useContext, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import type { AppContextType, Expense, Category, HouseholdMember, Settings, PaymentMode, Debt, ChitFund, ChitFundAuction } from '../types';
+import type { AppContextType, Expense, Category, HouseholdMember, Settings, PaymentMode, Debt, ChitFund, ChitFundAuction, Income } from '../types';
 import { supabaseApi } from '../services/supabaseApi';
 import { useSession } from '../src/contexts/SessionContext';
 
 // Define initial state structure
 interface AppState {
     expenses: Expense[];
+    incomes: Income[]; // New state
     categories: Category[];
     people: HouseholdMember[];
     paymentModes: PaymentMode[];
     debts: Debt[];
     chitFunds: ChitFund[];
-    chitFundAuctions: ChitFundAuction[]; // New state
+    chitFundAuctions: ChitFundAuction[]; 
     settings: Settings;
     isLoadingData: boolean;
 }
 
 const initialAppState: AppState = {
     expenses: [],
+    incomes: [], // Initialize new state
     categories: [],
     people: [],
     paymentModes: [],
     debts: [],
     chitFunds: [],
-    chitFundAuctions: [], // Initialize new state
+    chitFundAuctions: [], 
     settings: { currency: '₹', theme: 'light' },
     isLoadingData: true,
 };
@@ -105,6 +107,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, 'Expense added');
     const updateExpense = wrapUpdateDeleteApiCall(supabaseApi.updateExpense, 'Expense updated');
     const deleteExpense = wrapUpdateDeleteApiCall(supabaseApi.deleteExpense, 'Expense deleted');
+    
+    // Incomes CRUD
+    const addIncome = wrapApiCall(async (income: Omit<Income, 'id'>) => {
+        if (!userId) throw new Error("User not authenticated");
+        return supabaseApi.addIncome(income, userId);
+    }, 'Income added');
+    const updateIncome = wrapUpdateDeleteApiCall(supabaseApi.updateIncome, 'Income updated');
+    const deleteIncome = wrapUpdateDeleteApiCall(supabaseApi.deleteIncome, 'Income deleted');
 
     const addCategory = wrapApiCall(async (category: Omit<Category, 'id'>) => {
         if (!userId) throw new Error("User not authenticated");
@@ -162,17 +172,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const value: AppContextType = useMemo(() => ({
         expenses: state.expenses, 
+        incomes: state.incomes, // Include incomes
         categories: state.categories, 
         people: state.people, 
         paymentModes: state.paymentModes, 
         debts: state.debts, 
         chitFunds: state.chitFunds, 
-        chitFundAuctions: state.chitFundAuctions, // Include new state
+        chitFundAuctions: state.chitFundAuctions, 
         settings: state.settings,
         isLoadingData: state.isLoadingData,
         addExpense, 
         updateExpense, 
         deleteExpense,
+        addIncome, // Include income functions
+        updateIncome,
+        deleteIncome,
         addCategory, 
         updateCategory, 
         deleteCategory,
@@ -188,7 +202,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addChitFund, 
         updateChitFund, 
         deleteChitFund,
-        addChitFundAuction, // Include new functions
+        addChitFundAuction, 
         updateChitFundAuction,
         deleteChitFundAuction,
         updateSettings,
@@ -201,6 +215,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         getPersonName, 
         getPaymentModeName,
         addExpense, updateExpense, deleteExpense,
+        addIncome, updateIncome, deleteIncome, // Dependencies
         addCategory, updateCategory, deleteCategory,
         addPerson, updatePerson, deletePerson,
         addPaymentMode, updatePaymentMode, deletePaymentMode,

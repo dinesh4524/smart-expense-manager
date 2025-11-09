@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Home, CreditCard, Users, PieChart, Settings, Menu, X, LogOut, Shield, LayoutGrid, WalletCards, HandCoins, Landmark } from 'lucide-react';
+import { Home, CreditCard, Users, PieChart, Settings, Menu, X, LogOut, Shield, LayoutGrid, WalletCards, HandCoins, Landmark, DollarSign } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
 import ExpenseManager from './components/ExpenseManager';
+import IncomeManager from './components/IncomeManager'; // Import new component
 import CategoryManager from './components/CategoryManager';
 import PeopleManager from './components/PeopleManager';
 import PaymentModeManager from './components/PaymentModeManager';
@@ -18,7 +19,7 @@ import { AppProvider, useAppContext } from './contexts/AppContext';
 import { SessionContextProvider, useSession } from '@/src/contexts/SessionContext';
 import { supabase } from '@/src/integrations/supabase/client';
 
-type View = 'dashboard' | 'expenses' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
+type View = 'dashboard' | 'expenses' | 'incomes' | 'categories' | 'people' | 'paymentModes' | 'debts' | 'chits' | 'reports' | 'settings' | 'admin';
 type UnauthenticatedView = 'landing' | 'login' | 'register';
 
 const AppContentInner: React.FC = () => {
@@ -81,6 +82,8 @@ const AppContentInner: React.FC = () => {
         return <Dashboard setView={setView} />;
       case 'expenses':
         return <ExpenseManager />;
+      case 'incomes': // New case
+        return <IncomeManager />;
       case 'categories':
         return <CategoryManager />;
       case 'people':
@@ -116,6 +119,7 @@ const AppContentInner: React.FC = () => {
         <ul className="flex-grow overflow-y-scroll">
           <NavItem icon={<Home size={20} />} label="Dashboard" currentView={view} targetView="dashboard" />
           <NavItem icon={<CreditCard size={20} />} label="Expenses" currentView={view} targetView="expenses" />
+          <NavItem icon={<DollarSign size={20} />} label="Income" currentView={view} targetView="incomes" /> {/* New Nav Item */}
           <NavItem icon={<PieChart size={20} />} label="Reports" currentView={view} targetView="reports" />
           <li className="px-3 pt-4 pb-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Manage</li>
           <NavItem icon={<LayoutGrid size={20} />} label="Categories" currentView={view} targetView="categories" />

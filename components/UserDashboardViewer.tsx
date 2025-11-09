@@ -5,7 +5,7 @@ import Dashboard from './Dashboard';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import { ArrowLeft } from 'lucide-react';
-import type { Expense, Category, HouseholdMember, Debt, Settings, ChitFund, PaymentMode } from '../types';
+import type { Expense, Category, HouseholdMember, Debt, Settings, ChitFund, PaymentMode, Income, ChitFundAuction } from '../types';
 
 interface UserDashboardViewerProps {
   userId: string;
@@ -15,11 +15,13 @@ interface UserDashboardViewerProps {
 
 type DashboardData = {
   expenses: Expense[];
+  incomes: Income[]; // Added Income
   categories: Category[];
   people: HouseholdMember[];
   paymentModes: PaymentMode[];
   debts: Debt[];
   chitFunds: ChitFund[];
+  chitFundAuctions: ChitFundAuction[]; // Added ChitFundAuction
   settings: Settings;
 }
 

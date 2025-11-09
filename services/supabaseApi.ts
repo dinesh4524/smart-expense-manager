@@ -1,5 +1,5 @@
 import { supabase } from '@/src/integrations/supabase/client';
-import type { Expense, Category, HouseholdMember, PaymentMode, Debt, ChitFund, Settings, ChitFundAuction } from '../types';
+import type { Expense, Category, HouseholdMember, PaymentMode, Debt, ChitFund, Settings, ChitFundAuction, Income } from '../types';
 
 // Helper function to get the current user's ID
 const getUserId = () => {
@@ -39,6 +39,7 @@ export const supabaseApi = {
             people, 
             paymentModes, 
             expenses, 
+            incomes, // Fetch incomes
             debts, 
             chitFunds,
             chitFundAuctions
@@ -46,7 +47,8 @@ export const supabaseApi = {
             fetchTable<Category>('categories'),
             fetchTable<HouseholdMember>('household_members'),
             fetchTable<PaymentMode>('payment_modes'),
-            fetchTable<any>('expenses'), // Fetch as 'any' to handle snake_case
+            fetchTable<any>('expenses'), 
+            fetchTable<any>('incomes'), // Fetch incomes
             fetchTable<any>('debts'),
             fetchTable<any>('chit_funds'),
             fetchTable<any>('chit_fund_auctions'),
@@ -62,6 +64,14 @@ export const supabaseApi = {
             personId: e.household_member_id,
             paymentModeId: e.payment_mode_id,
             receiptUrl: e.receipt_url,
+        }));
+        
+        const mappedIncomes: Income[] = incomes.map((i: any) => ({
+            id: i.id,
+            date: i.date,
+            description: i.description,
+            amount: i.amount,
+            source: i.source,
         }));
 
         const mappedDebts: Debt[] = debts.map((d: any) => ({
@@ -104,6 +114,7 @@ export const supabaseApi = {
             people, 
             paymentModes, 
             expenses: mappedExpenses, 
+            incomes: mappedIncomes, // Return incomes
             debts: mappedDebts, 
             chitFunds: mappedChitFunds, 
             chitFundAuctions: mappedChitFundAuctions,
@@ -223,6 +234,44 @@ export const supabaseApi = {
     deleteExpense: async (id: string) => {
         const { error } = await supabase
             .from('expenses')
+            .delete()
+            .eq('id', id);
+        if (error) throw new Error(error.message);
+    },
+    
+    // --- Incomes ---
+    addIncome: async (income: Omit<Income, 'id'>, userId: string) => {
+        const dbIncome = {
+            user_id: userId,
+            amount: income.amount,
+            description: income.description,
+            date: income.date.split('T')[0],
+            source: income.source,
+        };
+        const { data, error } = await supabase
+            .from('incomes')
+            .insert([dbIncome])
+            .select()
+            .single();
+        if (error) throw new Error(error.message);
+        return data;
+    },
+    updateIncome: async (income: Income) => {
+        const dbIncome = {
+            amount: income.amount,
+            description: income.description,
+            date: income.date.split('T')[0],
+            source: income.source,
+        };
+        const { error } = await supabase
+            .from('incomes')
+            .update(dbIncome)
+            .eq('id', income.id);
+        if (error) throw new Error(error.message);
+    },
+    deleteIncome: async (id: string) => {
+        const { error } = await supabase
+            .from('incomes')
             .delete()
             .eq('id', id);
         if (error) throw new Error(error.message);

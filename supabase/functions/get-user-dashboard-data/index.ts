@@ -46,19 +46,23 @@ serve(async (req) => {
         peopleRes, 
         paymentModesRes, 
         expensesRes, 
+        incomesRes, // Fetch incomes
         debtsRes, 
-        chitFundsRes
+        chitFundsRes,
+        chitFundAuctionsRes // Fetch auctions
     ] = await Promise.all([
         serviceClient.from('categories').select('*').eq('user_id', userId),
         serviceClient.from('household_members').select('*').eq('user_id', userId),
         serviceClient.from('payment_modes').select('*').eq('user_id', userId),
         serviceClient.from('expenses').select('*').eq('user_id', userId),
+        serviceClient.from('incomes').select('*').eq('user_id', userId), // Fetch incomes
         serviceClient.from('debts').select('*').eq('user_id', userId),
         serviceClient.from('chit_funds').select('*').eq('user_id', userId),
+        serviceClient.from('chit_fund_auctions').select('*').eq('user_id', userId), // Fetch auctions
     ]);
 
     // 5. Check for errors
-    const errors = [categoriesRes.error, peopleRes.error, paymentModesRes.error, expensesRes.error, debtsRes.error, chitFundsRes.error].filter(Boolean);
+    const errors = [categoriesRes.error, peopleRes.error, paymentModesRes.error, expensesRes.error, incomesRes.error, debtsRes.error, chitFundsRes.error, chitFundAuctionsRes.error].filter(Boolean);
     if (errors.length > 0) {
         throw new Error(errors.map(e => e.message).join(', '));
     }
@@ -68,22 +72,32 @@ serve(async (req) => {
         id: e.id, date: e.date, description: e.description, amount: e.amount,
         categoryId: e.category_id, personId: e.household_member_id, paymentModeId: e.payment_mode_id, receiptUrl: e.receipt_url,
     }));
+    const mappedIncomes = incomesRes.data.map((i) => ({
+        id: i.id, date: i.date, description: i.description, amount: i.amount, source: i.source,
+    }));
     const mappedDebts = debtsRes.data.map((d) => ({
         id: d.id, personId: d.person_id, amount: d.amount, type: d.type, description: d.description,
         issueDate: d.issue_date, dueDate: d.due_date, status: d.status,
     }));
     const mappedChitFunds = chitFundsRes.data.map((c) => ({
         id: c.id, name: c.name, totalAmount: c.total_amount, monthlyInstallment: c.monthly_installment,
-        durationMonths: c.duration_months, startDate: c.start_date, status: c.status,
+        durationMonths: c.duration_months, startDate: c.start_date, foremanCommissionRate: c.foreman_commission_rate, status: c.status,
     }));
+    const mappedChitFundAuctions = chitFundAuctionsRes.data.map((a) => ({
+        id: a.id, chitFundId: a.chit_fund_id, monthNumber: a.month_number, auctionDate: a.auction_date,
+        discountAmount: a.discount_amount, prizedSubscriberName: a.prized_subscriber_name, isUserPrized: a.is_user_prized,
+    }));
+
 
     const responsePayload = {
         categories: categoriesRes.data,
         people: peopleRes.data,
         paymentModes: paymentModesRes.data,
         expenses: mappedExpenses,
+        incomes: mappedIncomes, // Include incomes
         debts: mappedDebts,
         chitFunds: mappedChitFunds,
+        chitFundAuctions: mappedChitFundAuctions, // Include auctions
     };
 
     return new Response(JSON.stringify(responsePayload), {
